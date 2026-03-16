@@ -1,0 +1,29 @@
+{
+  "name": "stormstore-app-updater",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acierto-incomodo/stormstore-app-updater.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/acierto-incomodo/stormstore-app-updater/issues"
+  },
+  "homepage": "https://github.com/acierto-incomodo/stormstore-app-updater#readme",
+  "devDependencies": {
+    "electron": "^41.0.2",
+    "electron-builder": "^26.8.1"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
+  }
+}
