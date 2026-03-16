@@ -1,0 +1,359 @@
+[
+  {
+    "id": "ambidextro",
+    "name": "Ambidextro",
+    "description": "Juego de acción/táctica donde controlas a personajes que luchan usando dos armas al mismo tiempo. El enfoque está en combos, precisión y velocidad para derrotar a enemigos en combates dinámicos.",
+    "category": "Juegos",
+    "icon": "../assets/apps/ambidextro.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/Ambidextro/game/Build/Build/Ambidextro.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/Ambidextro/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/ambidextro/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/ambidextro/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/Ambidextro",
+    "steam": "no",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "backseat-drivers",
+    "name": "Backseat Drivers",
+    "description": "Juego competitivo de carreras donde los jugadores se empujan, chocan y usan ítems contra sus oponentes mientras compiten por llegar primero a la meta.",
+    "category": "Juegos",
+    "icon": "../assets/apps/backseat-drivers.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/BackseatDriversLauncher/game/Build/Build/BackseatDrivers.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/BackseatDriversLauncher/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/backseat_drivers/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/backseat_drivers/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/BackseatDriversLauncher",
+    "steam": "si",
+    "wifi": "si",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "buckshot_roulette",
+    "name": "Buckshot Roulette",
+    "description": "Juego de terror/estrategia inspirado en la ruleta rusa donde te enfrentas a un “dealer” en rondas usando una escopeta cargada parcialmente. Debes decidir cuándo disparar y cuándo usar objetos únicos para sobrevivir mientras la IA te desafía.",
+    "category": "Juegos",
+    "icon": "../assets/apps/buckshot_roulette.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/BuckshotRoulette/game/Build/Build/BuckshotRoulette.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/BuckshotRoulette/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/buckshot_roulette/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/buckshot_roulette/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/BuckshotRoulette",
+    "steam": "si",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "content-warning",
+    "name": "Content Warning",
+    "description": "Juego cooperativo en el que tú y tus amigos grabáis vídeos en lugares aterradores para convertiros en estrellas virales mientras intentáis sobrevivir a criaturas y resolver situaciones tensas.",
+    "category": "Juegos",
+    "icon": "../assets/apps/content-warning.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/ContentWarning/game/Build/Build/BackseatDrivers.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/ContentWarning/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/content_warning/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/content_warning/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/ContentWarning",
+    "steam": "si",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "doom",
+    "name": "DOOM Classic",
+    "description": "Juego de disparos en primera persona pionero donde controlas al “Doomguy” luchando contra hordas de demonios y monstruos en niveles llenos de acción rápida, armas potentes y enemigos agresivos.",
+    "category": ["Juegos"],
+    "icon": "../assets/apps/doom.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/DOOM/game/Build/Build/DOOM.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/DOOM/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/DOOM/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/DOOM/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/DOOM",
+    "steam": "no",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "fnaf1",
+    "name": "Five Nights at Freddy's 1",
+    "description": "Primer juego, donde las noches son tensas y tienes que vigilar animatrónicos solo con cámaras y puertas.",
+    "category": "Juegos",
+    "icon": "../assets/apps/FNAF1.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/FNAF1/game/Build/Build/FNAF1.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/FNAF1/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/fnaf_1/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/fnaf_1/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/FNAF1",
+    "steam": "no",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "fnaf2",
+    "name": "Five Nights at Freddy's 2",
+    "description": "Introduce más animatrónicos y mecánicas nuevas, como una máscara y una linterna.",
+    "category": "Juegos",
+    "icon": "../assets/apps/FNAF2.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/FNAF2/game/Build/Build/FNAF2.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/FNAF2/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/fnaf_2/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/fnaf_2/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/FNAF2",
+    "steam": "no",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "fnaf3",
+    "name": "Five Nights at Freddy's 3",
+    "description": "Tienes una atracción de terror con grabaciones antiguas y un único animatrónico principal, junto a sistemas de ventilación.",
+    "category": "Juegos",
+    "icon": "../assets/apps/FNAF3.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/FNAF3/game/Build/Build/FNAF3.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/FNAF3/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/fnaf_3/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/fnaf_3/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/FNAF3",
+    "steam": "no",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "fnaf4",
+    "name": "Five Nights at Freddy's 4",
+    "description": "El juego es más escalofriante y se centra en miedos de un niño en su cuarto, con sonidos y perspectiva diferentes.",
+    "category": "Juegos",
+    "icon": "../assets/apps/FNAF4.png",
+      "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/FNAF4/game/Build/Build/FNAF4.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/FNAF4/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/fnaf_4/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/fnaf_4/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/FNAF4",
+    "steam": "no",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "fusion-arena",
+    "name": "Fusion Arena",
+    "description": "Fusion Arena es un juego multijugador en primera persona de tipo deathmatch, ambientado en un entorno tipo almacén. Los jugadores compiten entre sí disparando con varias armas (pistola, rifle automático y escopeta), recogiendo armas o recargas y salud en puntos repartidos por el mapa. Cada vez que un jugador muere, reaparece tras poco tiempo; al final de la partida, gana quien tenga más bajas.",
+    "category": "Juegos",
+    "icon": "../assets/apps/fusion-arena.png",
+      "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/TheShooterLauncher_New/game/Build/Build/TheShooter.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/TheShooterLauncher_New/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/The-Shooter-Launcher/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/The-Shooter-Launcher/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/TheShooterLauncher_New",
+    "steam": "no",
+    "wifi": "si",
+    "share-compatibility": "si",
+    "MicrosoftStore": "si",
+    "MicrosoftStoreLink": "https://apps.microsoft.com/detail/9PG96R122SPV?hl=es-es&gl=ES&ocid=pdpshare"
+  },
+  {
+    "id": "hollow-knight-silksong",
+    "name": "Hollow Knight: Silksong",
+    "description": "Secuela de Hollow Knight en la que controlas a Hornet, explorando un reino nuevo lleno de enemigos, habilidades y secretos. Es un juego de acción y aventura tipo metroidvania, con combate preciso y mundos extensos por descubrir.",
+    "category": "Juegos",
+    "icon": "../assets/apps/hollow-knight-silksong.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/HollowKnightSilksong/game/Build/Build/HollowKnightSilksong.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/HollowKnightSilksong/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/hollow_knight_silksong/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/hollow_knight_silksong/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/HollowKnightSilksong",
+    "steam": "si",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "karts-multiplayer",
+    "name": "Karts Multiplayer",
+    "description": "Un juego divertido para jugar con amigos. Corre con karts en diferentes pistas, recoge potenciadores y lanza objetos a tus oponentes para ganar la carrera. ¡Compite en línea y demuestra quién es el mejor piloto de karts!",
+    "category": "Juegos",
+    "icon": "../assets/apps/karts-multiplayer.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/KartsMultiplayerLauncher/game/Build/Build/KartsMultiplayer.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/KartsMultiplayerLauncher/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/KartsMultiplayer/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/KartsMultiplayer/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/KartsMultiplayerLauncher",
+    "steam": "no",
+    "wifi": "si",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "lethal-company",
+    "name": "Lethal Company",
+    "description": "Juego cooperativo donde un grupo de jugadores entra en instalaciones misteriosas para recoger recursos y cumplir cuotas, todo mientras criaturas hostiles los persiguen. Se destaca por su atmósfera tensa y momentos caóticos con amigos. (Típico juego del género “terror + extracción” viral en Steam).",
+    "category": "Juegos",
+    "icon": "../assets/apps/lethal-company.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/LethalCompany_Launcher/game/Build/Build/Lethal Company - Launcher.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/LethalCompany_Launcher/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/LethalCompany-Launcher/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/LethalCompany-Launcher/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/LethalCompany_Launcher",
+    "steam": "si",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "mage-arena",
+    "name": "Mage Arena",
+    "description": "Arena de combate mágico en la que controlas a un mago y luchas contra otros jugadores o enemigos, usando hechizos, estrategias y habilidades especiales para sobrevivir y ganar el duelo.",
+    "category": "Juegos",
+    "icon": "../assets/apps/mage-arena.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/MageArenaLauncher/game/Build/Build/MageArena.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/MageArenaLauncher/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/mage_arena/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/mage_arena/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/MageArenaLauncher",
+    "steam": "si",
+    "wifi": "si",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "miside-zero",
+    "name": "MiSide Zero",
+    "description": "La demo de MiSide Zero es una pequeña versión jugable de un proyecto hecho por fans que sirve como precuela del juego original MiSide. En ella te pones en la piel de Zero, un personaje rubio que explora el mundo de MiSide aproximadamente un año antes de los eventos principales.",
+    "category": "Juegos",
+    "icon": "../assets/apps/miside-zero.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/MiSideZero/game/Build/Build/MiSideZero.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/MiSideZero/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/miside-zero/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/miside-zero/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/MiSideZero",
+    "steam": "no",
+    "wifi": "no",
+    "share-compatibility": "no",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "repo",
+    "name": "R.E.P.O.",
+    "description": "Juego cooperativo de terror multijugador en el que hasta 6 jugadores exploran lugares siniestros para recuperar objetos valiosos, evitando criaturas peligrosas y usando la física del juego para transportar ítems sin romperlos. El enfoque está en el trabajo en equipo, los sustos y los momentos absurdos entre amigos.",
+    "category": "Juegos",
+    "icon": "../assets/apps/REPO.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/repo-game/game/Build/Build/repo-game.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/repo-game/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/repo-game/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/repo-game/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/repo-game",
+    "steam": "si",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  },
+  {
+    "id": "scamline",
+    "name": "Scam Line",
+    "description": "Scam Line es un juego multijugador de engaño social para 4–8 personas en el que todos compiten en desafíos psicológicos y de comunicación para ser el último en pie. En cada partida, los jugadores están en habitaciones separadas y solo pueden hablar mediante un teléfono móvil antiguo dentro del juego. Debes negociar, formar alianzas o engañar a los demás para avanzar en distintos mini‑retos, como identificar quién es distinto o jugar al Dilema del Prisionero. La clave está en leer a los otros jugadores y usar la comunicación limitada a tu favor: puedes cooperar o mentir, pero al final solo uno puede ganar.",
+    "category": ["Juegos"],
+    "icon": "../assets/apps/ScamLine.png",
+    "paths": {
+      "run": "%appdata%/StormGamesStudios/NewGameDir/ScamLine/game/Build/Build/ScamLine.exe",
+      "updateFileVersion": "%appdata%/StormGamesStudios/NewGameDir/ScamLine/game/Version.txt"
+    },
+    "download": {
+        "file1": "https://github.com/acierto-incomodo/ScamLine/releases/latest/download/Build.zip"
+    },
+    "updateFileVersion": "https://github.com/acierto-incomodo/ScamLine/releases/latest/download/Version.txt",
+    "removeFiles": "%appdata%/StormGamesStudios/NewGameDir/ScamLine",
+    "steam": "si",
+    "wifi": "si",
+    "share-compatibility": "si",
+    "MicrosoftStore": "no",
+    "MicrosoftStoreLink": null
+  }
+]
