@@ -1,29 +1,77 @@
 {
-  "name": "stormstore-app-updater",
-  "version": "1.0.0",
-  "description": "",
+  "name": "stormstore",
+  "version": "1.2.23",
+  "description": "Tienda de aplicaciones de StormGamesStudios",
+  "author": "StormGamesStudios",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "start:stormvortex": "electron . --StormVortex",
+    "build": "electron-builder",
+    "update-check": "electron-updater"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/acierto-incomodo/stormstore-app-updater.git"
+  "build": {
+    "appId": "com.stormgamesstudios.stormstore",
+    "productName": "StormStore",
+    "directories": {
+      "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "acierto-incomodo",
+      "repo": "StormStore"
+    },
+    "protocols": [
+      {
+        "name": "StormStore",
+        "schemes": [
+          "stormstore"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/app.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createStartMenuShortcut": true,
+      "createDesktopShortcut": true,
+      "include": "build/v2-installer.nsh",
+      "differentialPackage": true
+    },
+    "files": [
+      "package.json",
+      "main.js",
+      "preload.js",
+      "apps.json",
+      "UPDATE.md",
+      "Changes.txt",
+      "renderer/**/*",
+      "assets/**/*",
+      "!assets/extraFiles/**/*",
+      "!assets/media/trailers/**/*",
+      "!assets/apps-4096x4096/**/*",
+      "!assets/apps-new-quality/**/*",
+      "!assets/apps-old/**/*",
+      "!assets/apps-original/**/*",
+      "!assets/apps-to-make/**/*"
+    ],
+    "extraResources": [
+      "assets/extraFiles/**"
+    ]
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/acierto-incomodo/stormstore-app-updater/issues"
-  },
-  "homepage": "https://github.com/acierto-incomodo/stormstore-app-updater#readme",
   "devDependencies": {
-    "electron": "^41.0.2",
+    "electron": "^40.6.0",
     "electron-builder": "^26.8.1"
   },
   "dependencies": {
-    "electron-updater": "^6.8.3"
+    "@equal-games/game-scanner": "^1.1.4",
+    "@material/web": "^2.4.1",
+    "discord-rpc": "^4.0.1",
+    "electron-updater": "^6.8.3",
+    "extract-zip": "^2.0.1",
+    "steam-path": "^1.0.2"
   }
 }

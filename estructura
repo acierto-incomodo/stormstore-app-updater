@@ -1,0 +1,19 @@
+StormStore/
+├─ main.js
+├─ preload.js
+├─ package.json
+├─ apps.json
+├─ assets/
+│  ├─ app.ico
+│  ├─ app.png
+│  └─ extra-files/
+│  └─ fonts/
+│  └─ icons/
+│  └─ apps/
+│     └─ *.png
+└─ renderer/
+   ├─ index.html
+   ├─ licencias.html
+   ├─ no-internet.html
+   ├─ style.css
+   └─ app.js

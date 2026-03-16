@@ -1,0 +1,2 @@
+echo "Instalando..."
+npm i
