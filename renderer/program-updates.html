@@ -220,8 +220,8 @@
     <aside class="sidebar">
       <div class="sidebar-top">
         <div class="brand-container">
-          <img src="../assets/app.png" alt="StormStore" class="brand-logo" />
-          <span>StormStore</span>
+          <h2>StormStore</h2>
+          <p class="version" id="app-version"></p>
         </div>
 
         <button id="back-btn" class="back-button">← Volver</button>
@@ -233,22 +233,52 @@
         <p class="studio">StormGamesStudios</p>
 
         <div class="footer-icons">
-          <button id="open-updates" title="Actualizaciones">🔄</button>
-          <button id="open-licenses" title="Licencias">📄</button>
-          <button id="open-bigpicture" title="StormVortex">🎮</button>
-          <button id="open-info" title="Información">ℹ️</button>
-          <button id="open-settings" title="Ajustes">⚙️</button>
+          <button data-link="https://github.com/acierto-incomodo">
+            <img src="../assets/icons/github.svg" alt="GitHub" />
+          </button>
+          <button data-link="https://stormgamesstudios.vercel.app/">
+            <img
+              src="../assets/icons/web.svg"
+              alt="Web"
+              style="filter: invert(1)"
+            />
+          </button>
+          <button data-link="https://www.curseforge.com/members/creper1125463">
+            <img src="../assets/icons/curseforge.svg" alt="CurseForge" />
+          </button>
+          <button id="open-updates">
+            <img src="../assets/icons/update.svg" alt="Actualizaciones" />
+          </button>
+          <button id="open-licenses">
+            <img src="../assets/icons/license.svg" alt="Licencias" />
+          </button>
+          <button id="open-info">
+            <img src="../assets/icons/info.svg" alt="Información" />
+          </button>
         </div>
       </div>
     </aside>
 
     <main class="dashboard-layout">
       <div class="main-header">
-        <h1>Descargas y Actualizaciones</h1>
+        <h1>Descargas</h1>
         <div class="window-controls">
-          <button id="min-btn" class="window-btn">−</button>
-          <button id="max-btn" class="window-btn">□</button>
-          <button id="close-btn" class="window-btn">✕</button>
+          <button class="control-btn" id="open-downloads" title="Descargas">
+            <img
+              src="../assets/icons/download.svg"
+              alt="Descargas"
+              style="width: 20px; height: 20px; filter: invert(1)"
+            />
+          </button>
+          <button class="control-btn" id="open-big-picture" title="StormVortex">
+            <img src="../assets/icons/stormvortex.svg" alt="StormVortex" style="width: 20px; height: 20px" />
+          </button>
+          <button class="control-btn" id="open-settings-header" title="Ajustes">
+            <img src="../assets/icons/settings.svg" alt="Ajustes" style="width: 20px; height: 20px" />
+          </button>
+          <button class="control-btn" id="min-btn">─</button>
+          <button class="control-btn" id="max-btn">◻</button>
+          <button class="control-btn close" id="close-btn">✕</button>
         </div>
       </div>
 
@@ -268,8 +298,11 @@
       let downloads = new Map();
 
       // Eventos del backend
-      window.api.onDownloadStart((_event, id, filename) => {
-        addDownload(id, filename);
+      window.api.onDownloadStart((_event, id, filename, isUpdate) => {
+        addDownload(id, filename, isUpdate);
+        // Activar animación en el botón del header
+        checkActiveDownloads();
+        document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.add("downloading-active"));
       });
 
       window.api.onDownloadProgress((_event, id, progress) => {
@@ -278,49 +311,108 @@
 
       window.api.onDownloadComplete((_event, id) => {
         updateDownloadStatus(id, "completed");
+        // Desactivar animación si no hay más descargas
+        document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.remove("downloading-active"));
+        checkActiveDownloads();
       });
 
       window.api.onDownloadError((_event, id, error) => {
         updateDownloadStatus(id, "error", error);
+        checkActiveDownloads();
+      });
+
+      window.api.onDownloadCancelled((_event, id) => {
+        const item = document.getElementById(`download-${id}`);
+        if (item) item.remove();
+        downloads.delete(id);
+        checkActiveDownloads();
       });
 
       window.api.onMergingStart((_event, id) => {
         updateDownloadStatus(id, "merging");
+        checkActiveDownloads();
       });
 
       window.api.onExtractingStart((_event, id) => {
         updateDownloadStatus(id, "extracting");
+        checkActiveDownloads();
       });
 
       window.api.onVerifyingStart((_event, id) => {
         updateDownloadStatus(id, "verifying");
+        checkActiveDownloads();
       });
+
+      async function checkActiveDownloads() {
+        const all = await window.api.getAllDownloads();
+        // Consideramos "activo" si está en cualquier fase que no sea completado, error o cancelado
+        const isAnyBusy = all.some(d => 
+          d.status === 'downloading' || 
+          d.status === 'merging' || 
+          d.status === 'extracting' || 
+          d.status === 'verifying'
+        );
+
+        // Bloquear/Desbloquear navegación
+        toggleNavigationLock(isAnyBusy);
+
+        const isAnyDownloading = all.some(d => d.status === 'downloading' || d.status === 'merging' || d.status === 'extracting');
+        if (!isAnyDownloading) {
+          document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.remove("downloading-active"));
+        }
+      }
+
+      function toggleNavigationLock(lock) {
+        const elementsToHide = [
+          document.getElementById("back-btn"),
+          document.querySelector(".footer-icons"),
+          document.getElementById("open-big-picture"),
+          document.getElementById("open-settings-header"),
+          document.getElementById("min-btn"),
+          document.getElementById("max-btn"),
+          document.getElementById("close-btn")
+        ];
+
+        elementsToHide.forEach(el => {
+          if (el) {
+            el.style.opacity = lock ? "0" : "1";
+            el.style.pointerEvents = lock ? "none" : "auto";
+            el.style.transition = "opacity 0.3s ease";
+          }
+        });
+      }
 
       // RECUPERAR DESCARGAS ACTIVAS AL CARGAR
       window.addEventListener("DOMContentLoaded", async () => {
         const activeDownloads = await window.api.getAllDownloads();
         if (activeDownloads && activeDownloads.length > 0) {
-          activeDownloads.forEach(d => {
-            addDownload(d.id, d.config.name);
-            if (d.status !== 'downloading') updateDownloadStatus(d.id, d.status);
+          document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.add("downloading-active"));
+          activeDownloads.forEach((d) => {
+            addDownload(d.id, d.config.name, d.isUpdate, d.config.extractPath);
+            
+            updateDownloadStatus(d.id, d.status);
             updateDownloadProgress(d.id, {
               percent: d.progress,
               speed: d.speed,
               timeRemaining: d.timeRemaining,
               downloadedSize: d.downloaded,
-              totalSize: d.total
+              totalSize: d.total,
             });
           });
         }
+        // Verificar estado inicial al cargar la página
+        checkActiveDownloads();
       });
 
-      function addDownload(id, filename) {
+      function addDownload(id, filename, isUpdate, extractPath = "-") {
         const list = document.getElementById("download-list");
 
         // Limpiar estado vacío
         if (list.querySelector(".empty-state")) {
           list.innerHTML = "";
         }
+
+        const actionText = isUpdate ? "Actualizando" : "Instalando";
 
         const download = {
           id,
@@ -337,7 +429,7 @@
         const html = `
           <div class="download-item" id="download-${id}">
             <div class="download-header">
-              <div class="download-title">${filename}</div>
+              <div class="download-title">${actionText}: ${filename}</div>
               <div class="download-status status-downloading">Descargando</div>
             </div>
 
@@ -362,15 +454,12 @@
 
             <div class="info-row">
               <span class="info-label">Ubicación:</span>
-              <span id="location-${id}" style="word-break: break-all">-</span>
+              <span id="location-${id}" style="word-break: break-all">${extractPath}</span>
             </div>
 
             <div class="file-list" id="files-${id}"></div>
 
             <div class="button-group">
-              <button class="md-btn" id="pause-${id}" onclick="window.api.pauseDownload('${id}')">
-                Pausar
-              </button>
               <button class="md-btn danger" id="cancel-${id}" onclick="window.api.cancelDownload('${id}')">
                 Cancelar
               </button>
@@ -417,7 +506,10 @@
         // Actualizar tamaño descargado
         const sizeEl = document.getElementById(`downloaded-${id}`);
         if (sizeEl) {
-          const downloadedMB = (progress.downloadedSize / (1024 * 1024)).toFixed(2);
+          const downloadedMB = (
+            progress.downloadedSize /
+            (1024 * 1024)
+          ).toFixed(2);
           const totalMB = (progress.totalSize / (1024 * 1024)).toFixed(2);
           sizeEl.textContent = `${downloadedMB} MB / ${totalMB} MB`;
         }
@@ -431,6 +523,18 @@
 
         const item = document.getElementById(`download-${id}`);
         if (!item) return;
+
+        // Bloquear botón cancelar si ya no estamos en fase de descarga
+        const cancelBtn = document.getElementById(`cancel-${id}`);
+        if (cancelBtn) {
+          if (status === "completed" || status === "error") {
+            cancelBtn.style.display = "none";
+          } else if (status !== "downloading") {
+            cancelBtn.disabled = true;
+            cancelBtn.style.opacity = "0.5";
+            cancelBtn.textContent = "Procesando...";
+          }
+        }
 
         const statusEl = item.querySelector(".download-status");
         if (statusEl) {
@@ -466,31 +570,31 @@
       });
 
       // Footer links
-      document
-        .getElementById("open-updates")
-        ?.addEventListener("click", () => {
-          window.location.href = "updates.html";
-        });
+      document.getElementById("open-updates")?.addEventListener("click", () => {
+        window.location.href = "updates.html";
+      });
       document
         .getElementById("open-licenses")
         ?.addEventListener("click", () => {
           window.location.href = "licencias.html";
         });
-      document
-        .getElementById("open-bigpicture")
-        ?.addEventListener("click", () => {
-          window.api.openBigPicture();
+      document.getElementById("open-big-picture")?.addEventListener("click", () => {
+        window.api.openBigPicture();
+      });
+      document.getElementById("open-info")?.addEventListener("click", () => {
+        window.location.href = "info.html";
+      });
+      document.getElementById("open-settings-header")?.addEventListener("click", () => {
+        window.location.href = "settings.html";
+      });
+
+      // Footer links (Social)
+      document.querySelectorAll(".sidebar-footer button[data-link]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const url = btn.getAttribute("data-link");
+          window.open(url);
         });
-      document
-        .getElementById("open-info")
-        ?.addEventListener("click", () => {
-          window.location.href = "info.html";
-        });
-      document
-        .getElementById("open-settings")
-        ?.addEventListener("click", () => {
-          window.location.href = "settings.html";
-        });
+      });
 
       // Controles de ventana
       document
@@ -504,14 +608,10 @@
       if (maxBtn) {
         maxBtn.addEventListener("click", () => window.api.maximizeWindow());
         window.api.isMaximized().then((isMax) => {
-          maxBtn.textContent = isMax ? "🗗" : "□";
+          maxBtn.textContent = isMax ? "❐" : "◻";
         });
-        window.api.onWindowMaximized(() => {
-          maxBtn.textContent = "🗗";
-        });
-        window.api.onWindowUnmaximized(() => {
-          maxBtn.textContent = "□";
-        });
+        window.api.onWindowMaximized(() => (maxBtn.textContent = "❐"));
+        window.api.onWindowRestored(() => (maxBtn.textContent = "◻"));
       }
     </script>
     <script src="gamepad-global.js"></script>

@@ -9,6 +9,7 @@
 ## 📊 Comparación: Sistema Antiguo vs Nuevo
 
 ### ❌ Sistema Antiguo (apps.json)
+
 ```
 1. apps.json contiene: { id: "juego1", download: "https://url/instalador.exe" }
    ↓
@@ -24,6 +25,7 @@
 ```
 
 ### ✅ Sistema Nuevo (files.apps.json)
+
 ```
 1. files.apps.json contiene: { id: "juego1", files: ["juego1.zip"], ... }
    ↓
@@ -64,17 +66,17 @@
 
 ### 📝 Explicación de Cada Campo
 
-| Campo | Tipo | Descripción | Ejemplo |
-|-------|------|-------------|---------|
-| **id** | string | Identificador único del app | `"juego-doom-eternal"` |
-| **name** | string | Nombre mostrado al usuario | `"Doom Eternal"` |
-| **files** | array | Lista de archivos a descargar | `["juego.zip"]` o `["juego.zip.001", "juego.zip.002"]` |
-| **merge** | boolean | ¿Combinar archivos? | `true` si tiene .zip.001, .zip.002; `false` si es solo .zip |
-| **mergedName** | string | Nombre del archivo después de combinar | `"juego.zip"` |
-| **extractPath** | string | Ruta donde descomprimir | `"C:\\Program Files\\Games\\DoomEternal"` |
-| **checksumFile** | string | Nombre del archivo de verificación | `"juego.txt"` |
-| **checksumUrl** | string | URL donde descargar el checksum | `"https://ejemplo.com/checksums/juego.txt"` |
-| **downloadUrl** | string | URL base para descargar archivos | `"https://ejemplo.com/descargas/"` |
+| Campo            | Tipo    | Descripción                            | Ejemplo                                                     |
+| ---------------- | ------- | -------------------------------------- | ----------------------------------------------------------- |
+| **id**           | string  | Identificador único del app            | `"juego-doom-eternal"`                                      |
+| **name**         | string  | Nombre mostrado al usuario             | `"Doom Eternal"`                                            |
+| **files**        | array   | Lista de archivos a descargar          | `["juego.zip"]` o `["juego.zip.001", "juego.zip.002"]`      |
+| **merge**        | boolean | ¿Combinar archivos?                    | `true` si tiene .zip.001, .zip.002; `false` si es solo .zip |
+| **mergedName**   | string  | Nombre del archivo después de combinar | `"juego.zip"`                                               |
+| **extractPath**  | string  | Ruta donde descomprimir                | `"C:\\Program Files\\Games\\DoomEternal"`                   |
+| **checksumFile** | string  | Nombre del archivo de verificación     | `"juego.txt"`                                               |
+| **checksumUrl**  | string  | URL donde descargar el checksum        | `"https://ejemplo.com/checksums/juego.txt"`                 |
+| **downloadUrl**  | string  | URL base para descargar archivos       | `"https://ejemplo.com/descargas/"`                          |
 
 ---
 
@@ -83,6 +85,7 @@
 ### Flujo 1: Archivo Simple (.zip)
 
 **Configuración:**
+
 ```json
 {
   "id": "app-simple",
@@ -97,22 +100,23 @@
 ```
 
 **Proceso:**
+
 ```
 1. Descargar: https://ejemplo.com/descargas/app.zip
    (Archivo único de, ej, 500MB)
-   
+
 2. Descomprimir en C:\Apps\Simple
-   
+
 3. Descargar checksum: https://ejemplo.com/checksums/app.txt
    (Contiene: abc123def456...)
-   
+
 4. Calcular hash SHA-256 del contenido descomprimido
-   
+
 5. Comparar:
    - Hash remoto: abc123def456
    - Hash local: abc123def456
    → ✅ COINCIDEN
-   
+
 6. ¡Completado!
 ```
 
@@ -121,6 +125,7 @@
 ### Flujo 2: Archivos Múltiples (.zip.001, .zip.002, etc)
 
 **Configuración:**
+
 ```json
 {
   "id": "juego-grande",
@@ -141,6 +146,7 @@
 ```
 
 **Proceso:**
+
 ```
 DESCARGAR EN PARALELO (simultáneamente):
   ├─ https://ejemplo.com/descargas/juego-grande.zip.001 (10GB)
@@ -193,7 +199,9 @@ ELIMINAR TEMPORALES:
 ## 🔐 El Archivo de Checksum (.txt)
 
 ### ¿Qué es?
+
 Un archivo que contiene el **hash SHA-256** del contenido. Sirve para verificar que:
+
 - ✅ No se corrompió durante la descarga
 - ✅ No fue modificado en el servidor
 - ✅ Toda la información es íntegra
@@ -201,22 +209,27 @@ Un archivo que contiene el **hash SHA-256** del contenido. Sirve para verificar 
 ### Cómo generarlo
 
 **En Windows (PowerShell):**
+
 ```powershell
 certUtil -hashfile "juego.zip" SHA256 > juego.txt
 ```
 
 **En Linux/Mac:**
+
 ```bash
 sha256sum juego.zip > juego.txt
 ```
 
 **Resultado (juego.txt):**
+
 ```
 abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567abc890def
 ```
 
 ### ¿Dónde guardarlo?
+
 En tu servidor web, en la carpeta de checksums:
+
 ```
 https://ejemplo.com/checksums/juego.txt
 ```
@@ -226,6 +239,7 @@ https://ejemplo.com/checksums/juego.txt
 ## 💾 Ubicaciones de Archivos
 
 ### Durante la descarga
+
 ```
 %APPDATA%\StormGamesStudios\StormStore\temp_downloads\
   └─ juego-001\
@@ -236,6 +250,7 @@ https://ejemplo.com/checksums/juego.txt
 ```
 
 ### Después de descomprimir
+
 ```
 C:\Juegos\MiJuego\
   ├─ carpeta-juego\
@@ -245,6 +260,7 @@ C:\Juegos\MiJuego\
 ```
 
 ### El checksum final
+
 ```
 C:\Juegos\MiJuego\
   └─ juego-001.txt (para verificación futura)
@@ -255,6 +271,7 @@ C:\Juegos\MiJuego\
 ## 🔗 Ejemplo Completo: Descarga Manual
 
 ### Paso 1: Editar files.apps.json
+
 ```json
 [
   {
@@ -271,6 +288,7 @@ C:\Juegos\MiJuego\
 ```
 
 ### Paso 2: Subir archivos al servidor
+
 ```
 https://miservidor.com/juegos/
   └─ tutorial.zip (100MB)
@@ -280,6 +298,7 @@ https://miservidor.com/checksums/
 ```
 
 ### Paso 3: Descargar e instalar desde StormStore
+
 ```
 Usuario abre StormStore
     ↓
@@ -305,6 +324,7 @@ Verifica integridad
 ## 🛠️ Casos de Uso Prácticos
 
 ### Caso 1: Juego Simple
+
 ```json
 {
   "id": "minecraft",
@@ -319,14 +339,12 @@ Verifica integridad
 ```
 
 ### Caso 2: Juego AAA Grande (15GB)
+
 ```json
 {
   "id": "cyberpunk-2077",
   "name": "Cyberpunk 2077",
-  "files": [
-    "cyberpunk.zip.001",
-    "cyberpunk.zip.002"
-  ],
+  "files": ["cyberpunk.zip.001", "cyberpunk.zip.002"],
   "merge": true,
   "mergedName": "cyberpunk.zip",
   "extractPath": "D:\\Games\\Cyberpunk2077",
@@ -337,6 +355,7 @@ Verifica integridad
 ```
 
 ### Caso 3: Aplicación Portátil
+
 ```json
 {
   "id": "7zip-portable",
@@ -357,6 +376,7 @@ Verifica integridad
 ### El app en apps.json debe tener el mismo `id`:
 
 **apps.json:**
+
 ```json
 {
   "id": "mi-juego-001",
@@ -368,6 +388,7 @@ Verifica integridad
 ```
 
 **files.apps.json:**
+
 ```json
 {
   "id": "mi-juego-001",  ← DEBE SER EL MISMO ID
@@ -378,6 +399,7 @@ Verifica integridad
 ```
 
 Cuando el usuario intenta instalar desde StormStore:
+
 1. Lee el `id` del app en apps.json
 2. Busca ese `id` en files.apps.json
 3. Si lo encuentra → Usa el nuevo sistema
@@ -415,16 +437,19 @@ await downloadManager.startDownload(id, config, tempDir)
 ### Velocidades Esperadas
 
 **Descarga:**
+
 - 5 Mbps (conecta..) → 16 segundos/GB
 - 50 Mbps (buena) → 1.6 segundos/GB
 - 500 Mbps (fibra) → 0.16 segundos/GB
 
 **Descompresión:**
+
 - HDD (lento) → 100-300 MB/s
 - SSD (normal) → 500-1000 MB/s
 - NVMe (rápido) → 2000-5000 MB/s
 
 **Ejemplo: 10GB**
+
 - Descargar a 50 Mbps: ~27 minutos
 - Descomprimir en SSD: ~10 segundos
 - Total: ~27 minutos 10 segundos
@@ -450,12 +475,12 @@ await downloadManager.startDownload(id, config, tempDir)
 El sistema `files.apps.json` **simplifica enormemente** la instalación:
 
 ✅ **Antes:** Necesitaba crear un instalador .exe para cada juego  
-✅ **Ahora:** Solo necesito un .zip y un archivo de checksum  
+✅ **Ahora:** Solo necesito un .zip y un archivo de checksum
 
 ✅ **Antes:** Los usuarios esperaban 10-20 minutos instalando  
-✅ **Ahora:** Los usuarios solo esperan la descarga (más rápido si tiene buen Internet)  
+✅ **Ahora:** Los usuarios solo esperan la descarga (más rápido si tiene buen Internet)
 
 ✅ **Antes:** Riesgo de corrupción durante instalación  
-✅ **Ahora:** Verificación de integridad garantizada  
+✅ **Ahora:** Verificación de integridad garantizada
 
 Es un sistema **más moderno, seguro y rápido** 🚀

@@ -10,6 +10,7 @@
     "merge": true,
     "mergedName": "game-pack-001.zip",
     "extractPath": "C:\\Games\\GamePack1",
+    "executablePath": "C:\\Games\\GamePack1\\game.exe",
     "checksumFile": "game-pack-001.txt",
     "checksumUrl": "https://github.com/acierto-incomodo/UltraKillGame/releases/latest/download/version.txt",
     "downloadUrl": "https://github.com/acierto-incomodo/UltraKillGame/releases/latest/download/"
@@ -17,11 +18,10 @@
   {
     "id": "app-single",
     "name": "Aplicación Simple",
-    "files": [
-      "app-simple.zip"
-    ],
+    "files": ["app-simple.zip"],
     "merge": false,
     "extractPath": "C:\\Apps\\SimpleApp",
+    "executablePath": "C:\\Apps\\SimpleApp\\app.exe",
     "checksumFile": "app-simple.txt",
     "checksumUrl": "https://example.com/checksums/app-simple.txt",
     "downloadUrl": "https://example.com/downloads/"
@@ -29,13 +29,11 @@
   {
     "id": "ultrakill",
     "name": "ULTRAKILL",
-    "files": [
-      "Build.zip.001",
-      "Build.zip.002"
-    ],
+    "files": ["Build.zip.001", "Build.zip.002"],
     "merge": true,
     "mergedName": "Build.zip",
     "extractPath": "%appdata%/StormGamesStudios/NewGameDir/UltraKillGame/game/Build",
+    "executablePath": "%appdata%/StormGamesStudios/NewGameDir/UltraKillGame/game/Build/Build/ULTRAKILL.exe",
     "checksumFile": "version.txt",
     "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/UltraKillGame/game",
     "checksumUrl": "https://github.com/acierto-incomodo/UltraKillGame/releases/latest/download/version.txt",

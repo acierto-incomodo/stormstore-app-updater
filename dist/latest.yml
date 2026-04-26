@@ -1,8 +1,8 @@
 version: 2.0.0
 files:
   - url: StormStore-Setup-2.0.0.exe
-    sha512: y+Y9B8dm/xo7PUkV7egKTPzyzgwVScMI12T7RRVENBcnWC7xu74VL5KKNiU5mAUrORgFb+8ZhkUgG56kDZDcpA==
-    size: 132905519
+    sha512: WAWY4POGeAS396dNO1KVi2ncqxAckeJx6gBSFsTqtioDaUn+QuILVuSndrb1hw/nVMQJuWEcL1prsEYz74L/ZA==
+    size: 132908722
 path: StormStore-Setup-2.0.0.exe
-sha512: y+Y9B8dm/xo7PUkV7egKTPzyzgwVScMI12T7RRVENBcnWC7xu74VL5KKNiU5mAUrORgFb+8ZhkUgG56kDZDcpA==
-releaseDate: '2026-04-26T14:08:56.253Z'
+sha512: WAWY4POGeAS396dNO1KVi2ncqxAckeJx6gBSFsTqtioDaUn+QuILVuSndrb1hw/nVMQJuWEcL1prsEYz74L/ZA==
+releaseDate: '2026-04-26T17:07:16.041Z'

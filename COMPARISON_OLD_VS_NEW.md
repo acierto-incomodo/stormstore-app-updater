@@ -33,7 +33,7 @@
                     ▼
         ⏳ ESPERA A QUE TERMINE LA INSTALACIÓN
         (10-30 minutos según el juego)
-        
+
         Mientras instala:
         • Copia archivos
         • Crea registro de Windows
@@ -45,7 +45,7 @@
                     │
                     ▼
         ✅ COMPLETADO (después de 20-40 minutos)
-        
+
 PROBLEMAS:
 ❌ Lento (instalador ocupa mucho tiempo)
 ❌ Modificar registro del sistema
@@ -80,7 +80,7 @@ PROBLEMAS:
          • juego.zip.002 (10 GB)
          • juego.zip.003 (5 GB)
          ⏳ 27 minutos (a 50 Mbps, en paralelo)
-         
+
          📊 Progreso en tiempo real:
          ├─ % completado
          ├─ Velocidad (MB/s)
@@ -91,7 +91,7 @@ PROBLEMAS:
          COMBINA ARCHIVOS
          juego.zip.001 + 002 + 003 = juego.zip (35GB)
          ⏳ 5 minutos
-         
+
          Luego elimina:
          ❌ juego.zip.001
          ❌ juego.zip.002
@@ -120,7 +120,7 @@ PROBLEMAS:
                     │
                     ▼
          ✅ COMPLETADO (después de 30-35 minutos)
-         
+
 VENTAJAS:
 ✅ Más rápido (no hay instalador lento)
 ✅ Sin modificaciones del sistema
@@ -284,7 +284,7 @@ Usuario: "Quiero jugar Minecraft"
                         ▼
         ¿Qué es esto? ¿Dónde se instala?
         ¿Cuál es el ejecutable?
-                        
+
 ┌─────────────────────────────────────────────────────┐
 │           files.apps.json (CÓMO DESCARGAR)          │
 ├─────────────────────────────────────────────────────┤
@@ -342,18 +342,18 @@ USUARIO INSTALA UN APP:
 
 ## 🚀 Ventajas Resumen
 
-| Aspecto | Antiguo | Nuevo |
-|--------|--------|-------|
-| **Velocidad** | Lento (instalador) | Rápido (ZIP) |
-| **Instalación** | 10-30 min | 0.5-5 min |
-| **Descarga** | 1 archivo | Paralelo |
-| **Integridad** | No verifica | SHA-256 ✅ |
-| **Portabilidad** | Poco portable | Muy portable |
-| **Registro** | Modifica | Sin cambios |
-| **Facilidad** | Medio | Automático |
-| **Desinstalación** | Complicada | Solo eliminar |
-| **Espacio temp** | Alto | Bajo |
-| **Errores** | Más posibles | Menos probables |
+| Aspecto            | Antiguo            | Nuevo           |
+| ------------------ | ------------------ | --------------- |
+| **Velocidad**      | Lento (instalador) | Rápido (ZIP)    |
+| **Instalación**    | 10-30 min          | 0.5-5 min       |
+| **Descarga**       | 1 archivo          | Paralelo        |
+| **Integridad**     | No verifica        | SHA-256 ✅      |
+| **Portabilidad**   | Poco portable      | Muy portable    |
+| **Registro**       | Modifica           | Sin cambios     |
+| **Facilidad**      | Medio              | Automático      |
+| **Desinstalación** | Complicada         | Solo eliminar   |
+| **Espacio temp**   | Alto               | Bajo            |
+| **Errores**        | Más posibles       | Menos probables |
 
 ---
 

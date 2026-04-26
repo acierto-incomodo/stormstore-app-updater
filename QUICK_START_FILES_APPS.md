@@ -28,6 +28,7 @@
 ## 🔀 Casos de Uso
 
 ### Caso A: .zip simple (5-500MB)
+
 ```json
 {
   "id": "app-pequeña",
@@ -39,14 +40,11 @@
 ```
 
 ### Caso B: .zip.001, .zip.002, .zip.003 (>500MB)
+
 ```json
 {
   "id": "juego-grande",
-  "files": [
-    "juego.zip.001",
-    "juego.zip.002",
-    "juego.zip.003"
-  ],
+  "files": ["juego.zip.001", "juego.zip.002", "juego.zip.003"],
   "merge": true,
   "mergedName": "juego.zip",
   "extractPath": "D:\\Juegos\\GrandeJuego",
@@ -59,18 +57,21 @@
 ## 🔧 Pasos para Agregar un Nuevo App
 
 ### 1. Crear el .zip
+
 ```bash
 # Si es un archivo simple
 zip -r app.zip carpeta/
 ```
 
 ### 2. Dividir si es grande (>1GB recomendado)
+
 ```bash
 # Dividir en partes de 500MB
 zip -r -s 500m app.zip carpeta/
 ```
 
 ### 3. Generar checksum
+
 ```powershell
 # Windows PowerShell
 certUtil -hashfile app.zip SHA256 > app.txt
@@ -78,6 +79,7 @@ certUtil -hashfile app.zip SHA256 > app.txt
 ```
 
 ### 4. Subir a servidor
+
 ```
 https://tu-servidor.com/descargas/
   └─ app.zip (o app.zip.001, app.zip.002, ...)
@@ -87,6 +89,7 @@ https://tu-servidor.com/checksums/
 ```
 
 ### 5. Agregar a files.apps.json
+
 ```json
 {
   "id": "mi-app",
@@ -101,6 +104,7 @@ https://tu-servidor.com/checksums/
 ```
 
 ### 6. Asegurate que apps.json tiene el mismo id
+
 ```json
 {
   "id": "mi-app",  ← DEBE SER IGUAL
@@ -136,39 +140,43 @@ https://tu-servidor.com/checksums/
 
 ## 🎨 Campos Explicados
 
-| Campo | Qué es | Ejemplo |
-|-------|--------|---------|
-| `id` | Identificador único | `"minecraft"` |
-| `name` | Nombre bonito | `"Minecraft"` |
-| `files` | Qué descargar | `["minecraft.zip"]` |
-| `merge` | ¿Combinar archivos? | `true` o `false` |
-| `mergedName` | Nombre después de combinar | `"minecraft.zip"` |
-| `extractPath` | Dónde descomprimir | `"C:\\Games\\Minecraft"` |
-| `checksumFile` | Nombre del hash | `"minecraft.txt"` |
-| `checksumUrl` | URL del hash | `"https://cdn.../minecraft.txt"` |
-| `downloadUrl` | URL base | `"https://cdn.../descargas/"` |
+| Campo          | Qué es                     | Ejemplo                          |
+| -------------- | -------------------------- | -------------------------------- |
+| `id`           | Identificador único        | `"minecraft"`                    |
+| `name`         | Nombre bonito              | `"Minecraft"`                    |
+| `files`        | Qué descargar              | `["minecraft.zip"]`              |
+| `merge`        | ¿Combinar archivos?        | `true` o `false`                 |
+| `mergedName`   | Nombre después de combinar | `"minecraft.zip"`                |
+| `extractPath`  | Dónde descomprimir         | `"C:\\Games\\Minecraft"`         |
+| `checksumFile` | Nombre del hash            | `"minecraft.txt"`                |
+| `checksumUrl`  | URL del hash               | `"https://cdn.../minecraft.txt"` |
+| `downloadUrl`  | URL base                   | `"https://cdn.../descargas/"`    |
 
 ---
 
 ## ❌ Errores Comunes
 
 ### ❌ ID no coincide
+
 ```json
 // apps.json
 {"id": "juego1"}
 
-// files.apps.json  
+// files.apps.json
 {"id": "juego_1"}  ← DIFERENTE = Error
 ```
+
 ✅ **Solución:** Usar exactamente el mismo id
 
 ### ❌ URL mal formada
+
 ```json
 "downloadUrl": "https://cdn.ejemplo.com/descargas"  ← Sin /
 "downloadUrl": "https://cdn.ejemplo.com/descargas/"  ← ✅ Bien
 ```
 
 ### ❌ Checksum mal generado
+
 ```bash
 # Mal
 certUtil -hashfile app.zip SHA256
@@ -184,6 +192,7 @@ certUtil -hashfile app.zip SHA256 > app.txt
 ## 🚀 Migrar un App del Sistema Antiguo
 
 ### Antes (apps.json solo)
+
 ```json
 {
   "id": "old-game",
@@ -193,6 +202,7 @@ certUtil -hashfile app.zip SHA256 > app.txt
 ```
 
 ### Después (apps.json + files.apps.json)
+
 ```json
 // apps.json
 {
@@ -227,14 +237,14 @@ Contenido: [datos...]
 Fecha: 2024-01-15
 
      ↓ (procesar SHA-256)
-     
+
 Hash: abc123def456ghi789jkl012mno345pqr...
 
 Si alguien modifica 1 byte:
   Contenido: [datos... ← 1 byte cambió]
-  
+
      ↓ (procesar SHA-256)
-     
+
 Hash: xyz999abc111def222ghi333jkl444... ← DIFERENTE
 ```
 
@@ -244,12 +254,12 @@ Así si un archivo se corrompe durante descarga, ¡lo detectamos inmediatamente!
 
 ## 📈 Velocidades Típicas
 
-| Acción | Velocidad | Ejemplo (10GB) |
-|--------|-----------|---|
-| Descargar 50Mbps | 50 Mbps | 27 minutos |
-| Descargar 500Mbps | 500 Mbps | 2.7 minutos |
-| Descomprimir SSD | 1 GB/s | 10 segundos |
-| Descomprimir HDD | 200 MB/s | 50 segundos |
+| Acción            | Velocidad | Ejemplo (10GB) |
+| ----------------- | --------- | -------------- |
+| Descargar 50Mbps  | 50 Mbps   | 27 minutos     |
+| Descargar 500Mbps | 500 Mbps  | 2.7 minutos    |
+| Descomprimir SSD  | 1 GB/s    | 10 segundos    |
+| Descomprimir HDD  | 200 MB/s  | 50 segundos    |
 
 ---
 

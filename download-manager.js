@@ -1,4 +1,5 @@
 const fs = require("fs");
+const { app } = require("electron");
 const fsPromises = fs.promises;
 const path = require("path");
 const https = require("https");
@@ -6,6 +7,7 @@ const http = require("http");
 const crypto = require("crypto");
 const { exec } = require("child_process");
 const { promisify } = require("util");
+const extractZip = require("extract-zip");
 
 const execPromise = promisify(exec);
 
@@ -14,7 +16,24 @@ class DownloadManager {
     this.mainWindow = mainWindow;
     this.ipcMain = ipcMain;
     this.downloads = new Map();
-    this.sevenZrPath = path.join(__dirname, "assets/extraFiles/7zr.exe");
+
+    // Corregir la ruta de 7zr.exe para que funcione empaquetado (fuera del ASAR)
+    if (app.isPackaged) {
+      // En producción, extraResources se copian a la carpeta 'resources'
+      this.sevenZrPath = path.join(
+        process.resourcesPath,
+        "assets",
+        "extraFiles",
+        "7zr.exe",
+      );
+    } else {
+      this.sevenZrPath = path.join(
+        __dirname,
+        "assets",
+        "extraFiles",
+        "7zr.exe",
+      );
+    }
   }
 
   /**
@@ -22,10 +41,16 @@ class DownloadManager {
    */
   async startDownload(id, downloadConfig, tempDir) {
     try {
+      // Paso 0: Verificar versión antes de descargar para determinar si es instalación o actualización
+      const localVersion = await this._getLocalVersion(downloadConfig);
+      const remoteVersion = await this._getRemoteVersion(downloadConfig);
+      const isUpdate = localVersion !== null;
+
       const download = {
         id,
         config: downloadConfig,
         tempDir,
+        isUpdate,
         status: "downloading",
         downloadedFiles: [],
         progress: 0,
@@ -34,6 +59,7 @@ class DownloadManager {
         speed: 0,
         timeRemaining: 0,
         startTime: Date.now(),
+        currentRequest: null, // Guardar la petición activa para poder abortarla
         lastByteCount: 0,
         lastProgressUpdate: Date.now(),
       };
@@ -41,17 +67,22 @@ class DownloadManager {
       this.downloads.set(id, download);
 
       // Enviar evento de inicio
-      this.mainWindow.webContents.send("download-start", id, downloadConfig.name);
+      this.mainWindow.webContents.send(
+        "download-start",
+        id,
+        downloadConfig.name,
+        isUpdate,
+      );
 
-      // Paso 0: Verificar versión antes de descargar
-      const localVersion = await this._getLocalVersion(downloadConfig);
-      const remoteVersion = await this._getRemoteVersion(downloadConfig);
-
-      console.log(`Versión local: ${localVersion}, Versión remota: ${remoteVersion}`);
+      console.log(
+        `Versión local: ${localVersion}, Versión remota: ${remoteVersion}`,
+      );
 
       if (localVersion === remoteVersion && localVersion !== null) {
         // Las versiones coinciden, no descargar
-        console.log(`Las versiones coinciden (${localVersion}). Saltando descarga.`);
+        console.log(
+          `Las versiones coinciden (${localVersion}). Saltando descarga.`,
+        );
         this.mainWindow.webContents.send("download-complete", id);
         return { success: true, message: "Ya está actualizado" };
       }
@@ -63,8 +94,9 @@ class DownloadManager {
       await this._downloadFilesSequential(download);
 
       // Paso 2: Combinar archivos si es necesario (Implementado dentro de _downloadFilesSequential o después)
-      
+
       // Paso 3: Limpiar directorio destino ANTES de descomprimir
+      download.status = "extracting";
       this.mainWindow.webContents.send("cleaning-start", id);
       await this._cleanExtractPath(download);
 
@@ -73,6 +105,7 @@ class DownloadManager {
       await this._extractFiles(download);
 
       // Paso 5: Descargar y guardar archivo de versión
+      download.status = "verifying";
       this.mainWindow.webContents.send("verifying-start", id);
       await this._downloadAndSaveVersion(download, remoteVersion);
 
@@ -80,6 +113,7 @@ class DownloadManager {
       await this._cleanup(download);
 
       // Enviar evento de completación
+      download.status = "completed";
       this.mainWindow.webContents.send("download-complete", id);
 
       return { success: true, message: "Descarga y actualización completada" };
@@ -110,7 +144,13 @@ class DownloadManager {
 
   async _getRemoteVersion(config) {
     try {
-      return await this._downloadChecksum(config.checksumUrl);
+      // Pasar el ID para debug si fuera necesario
+      const data = await this._downloadChecksum(config.checksumUrl);
+      if (data && data.includes("\n")) {
+        // Si el archivo tiene varias líneas (ej: hash + nombre), nos quedamos con la primera
+        return data.split("\n")[0].trim();
+      }
+      return data ? data.trim() : "unknown";
     } catch (e) {
       return "unknown";
     }
@@ -118,11 +158,13 @@ class DownloadManager {
 
   async _downloadFilesSequential(download) {
     const { config, tempDir } = download;
-    
+
     let totalSize = 0;
     const filesWithSizes = [];
 
     for (const filename of config.files) {
+      if (download.status === "cancelled") return;
+
       const url = config.downloadUrl + filename;
       const size = await this._getFileSize(url);
       filesWithSizes.push({ filename, url, size });
@@ -132,13 +174,23 @@ class DownloadManager {
     download.total = totalSize;
 
     for (const fileInfo of filesWithSizes) {
+      if (download.status === "cancelled") return;
+
       const filepath = path.join(tempDir, fileInfo.filename);
-      await this._downloadFile(download, fileInfo.url, filepath, fileInfo.filename, fileInfo.size);
+      await this._downloadFile(
+        download,
+        fileInfo.url,
+        filepath,
+        fileInfo.filename,
+        fileInfo.size,
+      );
     }
 
     // Si merge es true, combinar después de descargar todos
     if (config.merge) {
+      download.status = "merging";
       this.mainWindow.webContents.send("merging-start", download.id);
+      if (this.mainWindow) this.mainWindow.setProgressBar(2); // Estado indeterminado durante combinación
       await this._mergeFiles(download);
     }
   }
@@ -146,18 +198,24 @@ class DownloadManager {
   async _cleanExtractPath(download) {
     const { config } = download;
     try {
-      // Asegurarse de que la carpeta de extracción exista
-      if (!fs.existsSync(config.extractPath)) {
-        await fsPromises.mkdir(config.extractPath, { recursive: true });
+      // BORRADO TOTAL: Eliminar archivos antiguos antes de poner los nuevos
+      if (fs.existsSync(config.extractPath)) {
+        await fsPromises.rm(config.extractPath, {
+          recursive: true,
+          force: true,
+        });
       }
-    } catch (e) { console.error("Error asegurando carpeta de extracción:", e); }
+      await fsPromises.mkdir(config.extractPath, { recursive: true });
+    } catch (e) {
+      console.error("Error limpiando carpeta de extracción:", e);
+    }
   }
 
   async _downloadAndSaveVersion(download, remoteVersion) {
     const { config } = download;
     const versionDir = config.checksumPath || config.extractPath;
     const versionPath = path.join(versionDir, config.checksumFile);
-    
+
     await fsPromises.mkdir(versionDir, { recursive: true });
     await fsPromises.writeFile(versionPath, remoteVersion);
   }
@@ -167,7 +225,7 @@ class DownloadManager {
    */
   async _downloadFiles(download) {
     const { config, tempDir } = download;
-    
+
     // Primero, hacer HEAD requests para obtener los tamaños
     let totalSize = 0;
     const fileSizes = [];
@@ -189,7 +247,7 @@ class DownloadManager {
       const filepath = path.join(tempDir, filename);
 
       downloadPromises.push(
-        this._downloadFile(download, url, filepath, filename, fileSizes[i])
+        this._downloadFile(download, url, filepath, filename, fileSizes[i]),
       );
     }
 
@@ -203,14 +261,22 @@ class DownloadManager {
     return new Promise((resolve, reject) => {
       const protocol = url.startsWith("https") ? https : http;
 
-      const req = protocol.request(
-        url,
-        { method: "HEAD" },
-        (res) => {
-          const size = parseInt(res.headers["content-length"], 10) || 0;
-          resolve(size);
+      const req = protocol.request(url, { method: "HEAD" }, (res) => {
+        // Soporte para redirecciones en HEAD (GitHub)
+        if (
+          [301, 302, 307, 308].includes(res.statusCode) &&
+          res.headers.location
+        ) {
+          let redirectUrl = res.headers.location;
+          if (!redirectUrl.startsWith("http")) {
+            const urlObj = new URL(url);
+            redirectUrl = urlObj.origin + redirectUrl;
+          }
+          return this._getFileSize(redirectUrl).then(resolve).catch(reject);
         }
-      );
+        const size = parseInt(res.headers["content-length"], 10) || 0;
+        resolve(size);
+      });
 
       req.on("error", (error) => {
         console.warn(`Error obteniendo tamaño de ${url}:`, error);
@@ -226,18 +292,48 @@ class DownloadManager {
    */
   _downloadFile(download, url, filepath, filename, fileSize) {
     return new Promise((resolve, reject) => {
+      if (download.status === "cancelled") return reject(new Error("CANCELLED"));
+
       const protocol = url.startsWith("https") ? https : http;
 
       const req = protocol.get(url, (res) => {
+        // MANEJO DE REDIRECCIONES
+        if (
+          [301, 302, 307, 308].includes(res.statusCode) &&
+          res.headers.location
+        ) {
+          let redirectUrl = res.headers.location;
+          if (!redirectUrl.startsWith("http")) {
+            const urlObj = new URL(url);
+            redirectUrl = urlObj.origin + redirectUrl;
+          }
+          return this._downloadFile(
+            download,
+            redirectUrl,
+            filepath,
+            filename,
+            fileSize,
+          )
+            .then(resolve)
+            .catch(reject);
+        }
+
         if (res.statusCode !== 200) {
           reject(new Error(`HTTP ${res.statusCode}: ${url}`));
           return;
         }
 
-        const totalFileSize = parseInt(res.headers["content-length"], 10) || fileSize || 0;
+        download.currentRequest = req;
+
+        // Asegurarse de que el directorio temporal existe ANTES de crear el stream (Fix ENOENT)
+        const dir = path.dirname(filepath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        const totalFileSize =
+          parseInt(res.headers["content-length"], 10) || fileSize || 0;
         let downloadedFromThisFile = 0;
         let lastUpdateTime = Date.now();
-        
+
         const file = fs.createWriteStream(filepath);
 
         res.on("data", (chunk) => {
@@ -249,8 +345,17 @@ class DownloadManager {
           if (now - lastUpdateTime > 500) {
             const elapsedSeconds = (now - download.startTime) / 1000;
             const speed = download.downloaded / Math.max(elapsedSeconds, 0.1);
-            const timeRemaining = Math.max(0, (download.total - download.downloaded) / Math.max(speed, 1));
-            const percent = Math.round((download.downloaded / Math.max(download.total, 1)) * 100);
+            const timeRemaining = Math.max(
+              0,
+              (download.total - download.downloaded) / Math.max(speed, 1),
+            );
+            const progressRatio =
+              download.downloaded / Math.max(download.total, 1);
+            const percent = Math.round(progressRatio * 100);
+
+            if (this.mainWindow) {
+              this.mainWindow.setProgressBar(progressRatio);
+            }
 
             this.mainWindow.webContents.send("download-progress", download.id, {
               percent,
@@ -263,13 +368,14 @@ class DownloadManager {
             lastUpdateTime = now;
           }
         });
-        
-        // Asegurarse de que el directorio temporal existe
-        if (!fs.existsSync(path.dirname(filepath))) fs.mkdirSync(path.dirname(filepath), { recursive: true });
 
         file.on("finish", () => {
           file.close();
-          download.downloadedFiles.push({ filename, size: totalFileSize, filepath });
+          download.downloadedFiles.push({
+            filename,
+            size: totalFileSize,
+            filepath,
+          });
           resolve();
         });
 
@@ -277,8 +383,12 @@ class DownloadManager {
       });
 
       req.on("error", (error) => {
-        fs.unlink(filepath, () => {});
-        reject(error);
+        if (download.status === "cancelled") {
+          resolve(); // Resolver silenciosamente si fue cancelado a propósito
+        } else {
+          fs.unlink(filepath, () => {});
+          reject(error);
+        }
       });
     });
   }
@@ -293,24 +403,30 @@ class DownloadManager {
     // Obtener archivos ordenados
     const files = [...config.files].sort();
 
-    // Leer y combinar
-    const fileHandle = await fsPromises.open(mergedPath, "w");
+    // Combinar archivos usando Streams (más eficiente para archivos grandes)
+    const writeStream = fs.createWriteStream(mergedPath);
 
     for (const filename of files) {
       const filepath = path.join(tempDir, filename);
-      const data = await fsPromises.readFile(filepath);
-      await fsPromises.writeFile(fileHandle, data);
+      await new Promise((resolve, reject) => {
+        const readStream = fs.createReadStream(filepath);
+        readStream.pipe(writeStream, { end: false });
+        readStream.on("end", resolve);
+        readStream.on("error", reject);
+      });
     }
-
-    await fileHandle.close();
+    writeStream.end();
+    await new Promise((resolve) => writeStream.on("finish", resolve));
 
     // Eliminar archivos parciales
     for (const filename of files) {
       const filepath = path.join(tempDir, filename);
-      await fs.unlink(filepath);
+      await fsPromises.unlink(filepath);
     }
 
-    download.downloadedFiles = [{ filename: config.mergedName, filepath: mergedPath }];
+    download.downloadedFiles = [
+      { filename: config.mergedName, filepath: mergedPath },
+    ];
   }
 
   /**
@@ -324,6 +440,20 @@ class DownloadManager {
     // Asegurarse de que la ruta destino existe (reforzado)
     if (!fs.existsSync(extractPath)) {
       await fsPromises.mkdir(extractPath, { recursive: true });
+    }
+
+    if (this.mainWindow) this.mainWindow.setProgressBar(2); // Estado indeterminado durante extracción
+
+    // Si es un archivo .zip, usar la librería extract-zip (soporta ZIP nativamente)
+    if (zipPath.toLowerCase().endsWith(".zip")) {
+      try {
+        await extractZip(path.resolve(zipPath), {
+          dir: path.resolve(extractPath),
+        });
+        return;
+      } catch (err) {
+        throw new Error(`Error al descomprimir ZIP: ${err.message}`);
+      }
     }
 
     // Ejecutar 7zr para descomprimir
@@ -350,17 +480,17 @@ class DownloadManager {
     try {
       const checksum = await this._downloadChecksum(
         config.checksumUrl,
-        config.checksumFile
+        config.checksumFile,
       );
 
       // Calcular checksum del contenido descargado
       const expectedChecksum = await this._calculateChecksum(
-        config.extractPath
+        config.extractPath,
       );
 
       if (checksum.trim() !== expectedChecksum.trim()) {
         throw new Error(
-          `Verificación fallida: checksums no coinciden\nEsperado: ${checksum}\nObtenido: ${expectedChecksum}`
+          `Verificación fallida: checksums no coinciden\nEsperado: ${checksum}\nObtenido: ${expectedChecksum}`,
         );
       }
 
@@ -385,17 +515,37 @@ class DownloadManager {
     return new Promise((resolve, reject) => {
       const protocol = url.startsWith("https") ? https : http;
 
-      protocol.get(url, (res) => {
-        let data = "";
+      const req = protocol.get(url, (res) => {
+        // Seguir redirecciones (GitHub usa 302 para descargas)
+        if (
+          [301, 302, 307, 308].includes(res.statusCode) &&
+          res.headers.location
+        ) {
+          let redirectUrl = res.headers.location;
+          if (!redirectUrl.startsWith("http")) {
+            const urlObj = new URL(url);
+            redirectUrl = urlObj.origin + redirectUrl;
+          }
+          return this._downloadChecksum(redirectUrl, filename)
+            .then(resolve)
+            .catch(reject);
+        }
 
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode} al obtener el checksum`));
+          return;
+        }
+
+        let data = "";
         res.on("data", (chunk) => {
           data += chunk;
         });
-
         res.on("end", () => {
           resolve(data);
         });
       });
+
+      req.on("error", (err) => reject(err));
     });
   }
 
@@ -454,13 +604,18 @@ class DownloadManager {
     if (!download || !download.tempDir) return;
 
     try {
-      const files = await fsPromises.readdir(download.tempDir);
-      for (const file of files) {
-        const filepath = path.join(download.tempDir, file);
-        await fsPromises.unlink(filepath);
+      if (fs.existsSync(download.tempDir)) {
+        await fsPromises.rm(download.tempDir, { recursive: true, force: true });
       }
-      // Eliminar directorio temporal
-      await fsPromises.rmdir(download.tempDir);
+
+      // Intentar eliminar la carpeta raíz de descargas si queda vacía
+      const rootTempDir = path.dirname(download.tempDir);
+      if (fs.existsSync(rootTempDir)) {
+        const files = await fsPromises.readdir(rootTempDir);
+        if (files.length === 0) {
+          await fsPromises.rm(rootTempDir, { recursive: true, force: true });
+        }
+      }
     } catch (error) {
       console.warn(`Error durante cleanup: ${error.message}`);
     }
@@ -483,8 +638,14 @@ class DownloadManager {
     const download = this.downloads.get(id);
     if (download) {
       download.status = "cancelled";
+      // Abortar la petición HTTP actual si existe
+      if (download.currentRequest) {
+        download.currentRequest.destroy();
+      }
       await this._cleanup(download);
       this.downloads.delete(id);
+      // Notificar al frontend
+      this.mainWindow.webContents.send("download-cancelled", id);
     }
   }
 

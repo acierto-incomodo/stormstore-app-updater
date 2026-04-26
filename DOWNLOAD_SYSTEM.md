@@ -11,7 +11,11 @@ Este sistema permite descargar, combinar (si es necesario) y descomprimir archiv
   {
     "id": "game-pack-001",
     "name": "Juego Completo Pack 1",
-    "files": ["game-pack-001.zip.001", "game-pack-001.zip.002", "game-pack-001.zip.003"],
+    "files": [
+      "game-pack-001.zip.001",
+      "game-pack-001.zip.002",
+      "game-pack-001.zip.003"
+    ],
     "merge": true,
     "mergedName": "game-pack-001.zip",
     "extractPath": "C:\\Games\\GamePack1",
@@ -37,6 +41,7 @@ Este sistema permite descargar, combinar (si es necesario) y descomprimir archiv
 ## Flujo de Descarga
 
 ### 1. Descarga Simple (.zip)
+
 ```
 Descargar archivo.zip
      ↓
@@ -48,6 +53,7 @@ Completado
 ```
 
 ### 2. Descarga Múltiple (.zip.001, .zip.002, etc)
+
 ```
 Descargar archivo.zip.001
 Descargar archivo.zip.002
@@ -67,18 +73,20 @@ Completado
 ## Uso desde el Renderer (JavaScript)
 
 ### Obtener lista de descargas disponibles
+
 ```javascript
 const fileApps = await window.api.getFileApps();
 console.log(fileApps); // Array de configuraciones de descarga
 ```
 
 ### Iniciar una descarga
+
 ```javascript
-const result = await window.api.startFileDownload('game-pack-001');
+const result = await window.api.startFileDownload("game-pack-001");
 if (result.success) {
-  console.log('Descarga iniciada');
+  console.log("Descarga iniciada");
 } else {
-  console.error('Error:', result.error);
+  console.error("Error:", result.error);
 }
 ```
 
@@ -101,31 +109,31 @@ window.api.onDownloadProgress((_event, id, progress) => {
 
 // Combinando archivos
 window.api.onMergingStart((_event, id) => {
-  console.log('Combinando archivos...');
+  console.log("Combinando archivos...");
   // Mostrar status
 });
 
 // Descomprimiendo
 window.api.onExtractingStart((_event, id) => {
-  console.log('Descomprimiendo archivos...');
+  console.log("Descomprimiendo archivos...");
   // Mostrar status
 });
 
 // Verificando
 window.api.onVerifyingStart((_event, id) => {
-  console.log('Verificando integridad...');
+  console.log("Verificando integridad...");
   // Mostrar status
 });
 
 // Descarga completada
 window.api.onDownloadComplete((_event, id) => {
-  console.log('¡Descarga completada!');
+  console.log("¡Descarga completada!");
   // Mostrar mensaje de éxito
 });
 
 // Error en descarga
 window.api.onDownloadError((_event, id, error) => {
-  console.error('Error:', error);
+  console.error("Error:", error);
   // Mostrar mensaje de error
 });
 ```
@@ -134,13 +142,13 @@ window.api.onDownloadError((_event, id, error) => {
 
 ```javascript
 // Pausar descarga
-await window.api.pauseDownload('game-pack-001');
+await window.api.pauseDownload("game-pack-001");
 
 // Cancelar descarga
-await window.api.cancelDownload('game-pack-001');
+await window.api.cancelDownload("game-pack-001");
 
 // Obtener estado de una descarga
-const status = await window.api.getDownloadStatus('game-pack-001');
+const status = await window.api.getDownloadStatus("game-pack-001");
 console.log(status);
 
 // Obtener todas las descargas
@@ -153,11 +161,13 @@ console.log(allDownloads);
 El archivo de checksum debe contener el hash SHA-256 del contenido descargado/descomprimido.
 
 **Ejemplo:**
+
 ```
 abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567abc890def
 ```
 
 El sistema:
+
 1. Descarga el archivo .txt desde `checksumUrl`
 2. Calcula el hash SHA-256 del contenido descargado
 3. Compara ambos valores
@@ -166,6 +176,7 @@ El sistema:
 ## Ubicaciones de Archivos Temporales
 
 Los archivos se descargan temporalmente en:
+
 ```
 %APPDATA%\StormGamesStudios\StormStore\temp_downloads\{fileAppId}\{timestamp}\
 ```
@@ -199,7 +210,7 @@ Todos los errores se comunican al renderer mediante el evento `onDownloadError`.
 ```javascript
 // 1. Obtener configuraciones disponibles
 const fileApps = await window.api.getFileApps();
-console.log('Descargas disponibles:', fileApps);
+console.log("Descargas disponibles:", fileApps);
 
 // 2. Configurar listeners
 window.api.onDownloadStart((_event, id, filename) => {
@@ -213,19 +224,19 @@ window.api.onDownloadProgress((_event, id, progress) => {
 });
 
 window.api.onDownloadComplete((_event, id) => {
-  console.log('¡Completado!');
+  console.log("¡Completado!");
   showSuccessMessage(id);
 });
 
 window.api.onDownloadError((_event, id, error) => {
-  console.error('Error:', error);
+  console.error("Error:", error);
   showErrorMessage(id, error);
 });
 
 // 3. Iniciar descarga
-const result = await window.api.startFileDownload('game-pack-001');
+const result = await window.api.startFileDownload("game-pack-001");
 if (!result.success) {
-  console.error('No se pudo iniciar:', result.error);
+  console.error("No se pudo iniciar:", result.error);
 }
 ```
 

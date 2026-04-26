@@ -44,6 +44,7 @@ certUtil -hashfile contenido.zip SHA256 > contenido.txt
 ```
 
 El archivo debe contener solo el hash (sin la ruta del archivo):
+
 ```
 abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567abc890def
 ```
@@ -63,6 +64,7 @@ npm run build
 ### Caso 1: Descarga Simple (archivo .zip)
 
 **Configuración:**
+
 ```json
 {
   "id": "app-simple",
@@ -77,6 +79,7 @@ npm run build
 ```
 
 **Flujo:**
+
 1. Descarga `app-simple.zip`
 2. Descomprime en `C:\\Apps\\Simple`
 3. Verifica checksum
@@ -85,6 +88,7 @@ npm run build
 ### Caso 2: Descarga Múltiple (archivos .zip.001, .zip.002, etc)
 
 **Configuración:**
+
 ```json
 {
   "id": "juego-grande",
@@ -105,6 +109,7 @@ npm run build
 ```
 
 **Flujo:**
+
 1. Descarga `juego-grande.zip.001`
 2. Descarga `juego-grande.zip.002`
 3. Descarga `juego-grande.zip.003`
@@ -139,6 +144,7 @@ npm run build
 ### Cambiar colores de la interfaz
 
 En `program-updates.html`, busca:
+
 ```html
 <style>
   :root {
@@ -161,21 +167,25 @@ Si necesitas agregar campos personalizados:
 ## 🐛 Solución de Problemas
 
 ### "Checksum mismatch"
+
 - Verifica que el archivo de checksum en el servidor es correcto
 - Regenera el hash SHA-256
 - Asegúrate de que el archivo descargado no está corrupto
 
 ### "Permisos insuficientes"
+
 - Ejecuta StormStore como administrador
 - Verifica que el directorio de destino es accesible
 - Comprueba los permisos del directorio
 
 ### "Espacio insuficiente"
+
 - Verifica que hay suficiente espacio en disco para descargar y descomprimir
 - Elimina archivos innecesarios
 - Considera cambiar la ruta de descarga
 
 ### La descarga se detiene
+
 - Revisa la conexión a Internet
 - Verifica que el servidor remoto sigue disponible
 - Intenta cancelar y reiniciar la descarga
@@ -183,16 +193,19 @@ Si necesitas agregar campos personalizados:
 ## 📝 Ejemplos de URLs Reales
 
 ### GitHub (releases)
+
 ```json
 "downloadUrl": "https://github.com/usuario/repo/releases/download/v1.0/"
 ```
 
 ### Google Drive
+
 ```json
 "downloadUrl": "https://drive.google.com/uc?export=download&id=ID_DEL_ARCHIVO&"
 ```
 
 ### Servidor propio
+
 ```json
 "downloadUrl": "https://tu-dominio.com/descargas/"
 ```
@@ -200,6 +213,7 @@ Si necesitas agregar campos personalizados:
 ## 🔐 Seguridad
 
 ### Verificación de integridad
+
 El sistema verifica que los archivos descargados no estén corruptos usando SHA-256:
 
 ```
@@ -207,6 +221,7 @@ Descarga remota → Hash local → Comparar con Hash remoto → OK/ERROR
 ```
 
 ### Permisos
+
 - Los archivos temporales se guardan en `%APPDATA%\StormGamesStudios\StormStore\temp_downloads\`
 - Solo el usuario actual puede acceder
 - Se limpian automáticamente después de completar
@@ -217,10 +232,10 @@ Para ver el progreso detallado, abre las DevTools (Ctrl+Shift+I) y observa:
 
 ```javascript
 // Ver todas las descargas activas
-window.api.getAllDownloads().then(d => console.log(d));
+window.api.getAllDownloads().then((d) => console.log(d));
 
 // Ver estado de una descarga específica
-window.api.getDownloadStatus('mi-primer-pack').then(s => console.log(s));
+window.api.getDownloadStatus("mi-primer-pack").then((s) => console.log(s));
 ```
 
 ## 🎓 Prueba Local
@@ -229,6 +244,7 @@ Para probar el sistema localmente:
 
 1. Crea un archivo ZIP pequeño
 2. Divídelo en partes de 10MB:
+
    ```bash
    # Linux/Mac
    zip archivo.zip contenido/
@@ -236,11 +252,13 @@ Para probar el sistema localmente:
    ```
 
 3. Crea un servidor local:
+
    ```bash
    python -m http.server 8000
    ```
 
 4. Actualiza `files.apps.json`:
+
    ```json
    "downloadUrl": "http://localhost:8000/"
    ```
