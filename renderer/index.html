@@ -94,6 +94,9 @@
           <button id="open-updates">
             <img src="../assets/icons/update.svg" alt="Actualizaciones" />
           </button>
+          <button id="open-downloads" title="Centro de Descargas">
+            <img src="../assets/icons/loading-new.svg" alt="Descargas" style="filter: invert(1)" />
+          </button>
           <button id="open-licenses">
             <img src="../assets/icons/license.svg" alt="Licencias" />
           </button>
@@ -228,6 +231,9 @@
       // Abrir la página de actualizaciones
       document.getElementById("open-updates").addEventListener("click", () => {
         window.location.href = "updates.html";
+      });
+      document.getElementById("open-downloads")?.addEventListener("click", () => {
+        window.location.href = "downloads.html";
       });
 
       // Abrir la página de licencias en la misma ventana

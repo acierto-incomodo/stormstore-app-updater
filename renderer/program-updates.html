@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestor de Descargas - StormStore</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .download-container {
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+
+      .download-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        animation: slideUpFade 0.3s ease-out;
+      }
+
+      .download-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .download-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #fff;
+      }
+
+      .download-status {
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .status-downloading {
+        background: rgba(33, 150, 243, 0.2);
+        color: #21f0f3;
+      }
+
+      .status-merging {
+        background: rgba(255, 152, 0, 0.2);
+        color: #ffc107;
+      }
+
+      .status-extracting {
+        background: rgba(76, 175, 80, 0.2);
+        color: #81c784;
+      }
+
+      .status-verifying {
+        background: rgba(156, 39, 176, 0.2);
+        color: #ba68c8;
+      }
+
+      .status-completed {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4caf50;
+      }
+
+      .status-error {
+        background: rgba(244, 67, 54, 0.2);
+        color: #ef5350;
+      }
+
+      .progress-section {
+        margin-bottom: 15px;
+      }
+
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #ccc;
+        margin-bottom: 8px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2196f3, #21f0f3);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        box-shadow: 0 0 10px rgba(33, 240, 243, 0.5);
+      }
+
+      .file-list {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        font-size: 0.9rem;
+        color: #bbb;
+      }
+
+      .file-name {
+        flex: 1;
+        word-break: break-all;
+      }
+
+      .file-size {
+        margin-left: 20px;
+        color: #999;
+        font-size: 0.85rem;
+      }
+
+      .file-status-icon {
+        margin-left: 10px;
+        font-size: 1.2rem;
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #999;
+        margin: 8px 0;
+      }
+
+      .info-label {
+        font-weight: 600;
+        color: #bbb;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .md-btn {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(33, 150, 243, 0.2);
+        color: #2196f3;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+      }
+
+      .md-btn:hover {
+        background: rgba(33, 150, 243, 0.3);
+      }
+
+      .md-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .md-btn.danger {
+        background: rgba(244, 67, 54, 0.2);
+        color: #ef5350;
+      }
+
+      .md-btn.danger:hover {
+        background: rgba(244, 67, 54, 0.3);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+      }
+
+      .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+      }
+
+      .empty-state h2 {
+        color: #bbb;
+        margin-bottom: 10px;
+      }
+
+      #download-list {
+        min-height: 400px;
+      }
+
+      .speed-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 8px;
+      }
+
+      .time-remaining {
+        color: #21f0f3;
+      }
+    </style>
+  </head>
+
+  <body>
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand-container">
+          <img src="../assets/app.png" alt="StormStore" class="brand-logo" />
+          <span>StormStore</span>
+        </div>
+
+        <button id="back-btn" class="back-button">← Volver</button>
+
+        <ul id="categories"></ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <p class="studio">StormGamesStudios</p>
+
+        <div class="footer-icons">
+          <button id="open-updates" title="Actualizaciones">🔄</button>
+          <button id="open-licenses" title="Licencias">📄</button>
+          <button id="open-bigpicture" title="StormVortex">🎮</button>
+          <button id="open-info" title="Información">ℹ️</button>
+          <button id="open-settings" title="Ajustes">⚙️</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="dashboard-layout">
+      <div class="main-header">
+        <h1>Descargas y Actualizaciones</h1>
+        <div class="window-controls">
+          <button id="min-btn" class="window-btn">−</button>
+          <button id="max-btn" class="window-btn">□</button>
+          <button id="close-btn" class="window-btn">✕</button>
+        </div>
+      </div>
+
+      <div class="updates-container download-container">
+        <div id="download-list" class="download-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">📥</div>
+            <h2>Sin descargas en progreso</h2>
+            <p>Las descargas aparecerán aquí</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // Estado de descargas
+      let downloads = new Map();
+
+      // Eventos del backend
+      window.api.onDownloadStart((_event, id, filename) => {
+        addDownload(id, filename);
+      });
+
+      window.api.onDownloadProgress((_event, id, progress) => {
+        updateDownloadProgress(id, progress);
+      });
+
+      window.api.onDownloadComplete((_event, id) => {
+        updateDownloadStatus(id, "completed");
+      });
+
+      window.api.onDownloadError((_event, id, error) => {
+        updateDownloadStatus(id, "error", error);
+      });
+
+      window.api.onMergingStart((_event, id) => {
+        updateDownloadStatus(id, "merging");
+      });
+
+      window.api.onExtractingStart((_event, id) => {
+        updateDownloadStatus(id, "extracting");
+      });
+
+      window.api.onVerifyingStart((_event, id) => {
+        updateDownloadStatus(id, "verifying");
+      });
+
+      // RECUPERAR DESCARGAS ACTIVAS AL CARGAR
+      window.addEventListener("DOMContentLoaded", async () => {
+        const activeDownloads = await window.api.getAllDownloads();
+        if (activeDownloads && activeDownloads.length > 0) {
+          activeDownloads.forEach(d => {
+            addDownload(d.id, d.config.name);
+            if (d.status !== 'downloading') updateDownloadStatus(d.id, d.status);
+            updateDownloadProgress(d.id, {
+              percent: d.progress,
+              speed: d.speed,
+              timeRemaining: d.timeRemaining,
+              downloadedSize: d.downloaded,
+              totalSize: d.total
+            });
+          });
+        }
+      });
+
+      function addDownload(id, filename) {
+        const list = document.getElementById("download-list");
+
+        // Limpiar estado vacío
+        if (list.querySelector(".empty-state")) {
+          list.innerHTML = "";
+        }
+
+        const download = {
+          id,
+          filename,
+          status: "downloading",
+          progress: 0,
+          files: [],
+          speed: 0,
+          timeRemaining: 0,
+        };
+
+        downloads.set(id, download);
+
+        const html = `
+          <div class="download-item" id="download-${id}">
+            <div class="download-header">
+              <div class="download-title">${filename}</div>
+              <div class="download-status status-downloading">Descargando</div>
+            </div>
+
+            <div class="progress-section">
+              <div class="progress-label">
+                <span>Progreso</span>
+                <span id="progress-percent-${id}">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill-${id}" style="width: 0%"></div>
+              </div>
+              <div class="speed-info">
+                <span id="speed-${id}">Velocidad: 0 MB/s</span>
+                <span id="time-${id}" class="time-remaining">Tiempo: Calculando...</span>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Descargado:</span>
+              <span id="downloaded-${id}">0 MB / 0 MB</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Ubicación:</span>
+              <span id="location-${id}" style="word-break: break-all">-</span>
+            </div>
+
+            <div class="file-list" id="files-${id}"></div>
+
+            <div class="button-group">
+              <button class="md-btn" id="pause-${id}" onclick="window.api.pauseDownload('${id}')">
+                Pausar
+              </button>
+              <button class="md-btn danger" id="cancel-${id}" onclick="window.api.cancelDownload('${id}')">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        `;
+
+        list.insertAdjacentHTML("beforeend", html);
+      }
+
+      function updateDownloadProgress(id, progress) {
+        if (!downloads.has(id)) return;
+
+        const download = downloads.get(id);
+        download.progress = progress.percent;
+        download.speed = progress.speed;
+        download.timeRemaining = progress.timeRemaining;
+        download.downloadedSize = progress.downloadedSize;
+        download.totalSize = progress.totalSize;
+
+        // Actualizar barra de progreso
+        const fill = document.getElementById(`progress-fill-${id}`);
+        if (fill) fill.style.width = progress.percent + "%";
+
+        // Actualizar porcentaje
+        const percent = document.getElementById(`progress-percent-${id}`);
+        if (percent) percent.textContent = Math.round(progress.percent) + "%";
+
+        // Actualizar velocidad
+        const speedEl = document.getElementById(`speed-${id}`);
+        if (speedEl) {
+          const speedMB = (progress.speed / (1024 * 1024)).toFixed(2);
+          speedEl.textContent = `Velocidad: ${speedMB} MB/s`;
+        }
+
+        // Actualizar tiempo restante
+        const timeEl = document.getElementById(`time-${id}`);
+        if (timeEl) {
+          const minutes = Math.floor(progress.timeRemaining / 60);
+          const seconds = Math.floor(progress.timeRemaining % 60);
+          timeEl.textContent = `Tiempo: ${minutes}m ${seconds}s`;
+        }
+
+        // Actualizar tamaño descargado
+        const sizeEl = document.getElementById(`downloaded-${id}`);
+        if (sizeEl) {
+          const downloadedMB = (progress.downloadedSize / (1024 * 1024)).toFixed(2);
+          const totalMB = (progress.totalSize / (1024 * 1024)).toFixed(2);
+          sizeEl.textContent = `${downloadedMB} MB / ${totalMB} MB`;
+        }
+      }
+
+      function updateDownloadStatus(id, status, error = null) {
+        if (!downloads.has(id)) return;
+
+        const download = downloads.get(id);
+        download.status = status;
+
+        const item = document.getElementById(`download-${id}`);
+        if (!item) return;
+
+        const statusEl = item.querySelector(".download-status");
+        if (statusEl) {
+          statusEl.className = `download-status status-${status}`;
+          const statusTexts = {
+            downloading: "Descargando",
+            merging: "Combinando archivos",
+            extracting: "Descomprimiendo",
+            verifying: "Verificando",
+            completed: "Completado",
+            error: "Error",
+          };
+          statusEl.textContent = statusTexts[status] || status;
+        }
+
+        if (status === "error" && error) {
+          const fileList = item.querySelector(".file-list");
+          if (fileList) {
+            fileList.innerHTML = `<div style="color: #ef5350; padding: 10px 0;">⚠️ Error: ${error}</div>`;
+          }
+        }
+      }
+
+      // Botones de navegación
+      document.getElementById("back-btn").addEventListener("click", () => {
+        window.history.back();
+      });
+
+      // Cargar versión
+      window.api.getAppVersion().then((v) => {
+        const versionEl = document.getElementById("app-version");
+        if (versionEl) versionEl.textContent = "v" + v;
+      });
+
+      // Footer links
+      document
+        .getElementById("open-updates")
+        ?.addEventListener("click", () => {
+          window.location.href = "updates.html";
+        });
+      document
+        .getElementById("open-licenses")
+        ?.addEventListener("click", () => {
+          window.location.href = "licencias.html";
+        });
+      document
+        .getElementById("open-bigpicture")
+        ?.addEventListener("click", () => {
+          window.api.openBigPicture();
+        });
+      document
+        .getElementById("open-info")
+        ?.addEventListener("click", () => {
+          window.location.href = "info.html";
+        });
+      document
+        .getElementById("open-settings")
+        ?.addEventListener("click", () => {
+          window.location.href = "settings.html";
+        });
+
+      // Controles de ventana
+      document
+        .getElementById("min-btn")
+        ?.addEventListener("click", () => window.api.minimizeWindow());
+      document
+        .getElementById("close-btn")
+        ?.addEventListener("click", () => window.api.closeWindow());
+
+      const maxBtn = document.getElementById("max-btn");
+      if (maxBtn) {
+        maxBtn.addEventListener("click", () => window.api.maximizeWindow());
+        window.api.isMaximized().then((isMax) => {
+          maxBtn.textContent = isMax ? "🗗" : "□";
+        });
+        window.api.onWindowMaximized(() => {
+          maxBtn.textContent = "🗗";
+        });
+        window.api.onWindowUnmaximized(() => {
+          maxBtn.textContent = "□";
+        });
+      }
+    </script>
+    <script src="gamepad-global.js"></script>
+  </body>
+</html>

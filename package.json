@@ -1,6 +1,6 @@
 {
   "name": "stormstore",
-  "version": "1.5.2",
+  "version": "2.0.0",
   "description": "Tienda de aplicaciones de StormGamesStudios",
   "author": "StormGamesStudios",
   "main": "main.js",
@@ -49,7 +49,9 @@
       "package.json",
       "main.js",
       "preload.js",
+      "download-manager.js",
       "apps.json",
+      "files.apps.json",
       "renderer/**/*",
       "assets/**/*",
       "settings.json",

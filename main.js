@@ -20,8 +20,10 @@ const { autoUpdater } = require("electron-updater");
 const SteamPath = require("steam-path");
 const gameScanner = require("@equal-games/game-scanner");
 const DiscordRPC = require("discord-rpc");
+const DownloadManager = require("./download-manager");
 
 let appsData = require("./apps.json");
+let filesAppsData = require("./files.apps.json");
 let isOffline = true; // Por defecto asumimos offline hasta que la sincronización diga lo contrario
 
 const ICON_SIZES = [
@@ -49,6 +51,13 @@ const REMOTE_ICONS_BASE =
 let mainWindow;
 let updateInfo = null;
 let tray = null;
+let downloadManager = null;
+const DOWNLOADS_TEMP_DIR = path.join(
+  app.getPath("appData"),
+  "StormGamesStudios",
+  "StormStore",
+  "temp_downloads"
+);
 
 // =====================================
 // GESTIÓN DE AJUSTES
@@ -902,104 +911,94 @@ ipcMain.handle("get-epic-games", async () => {
 });
 
 async function installAppLogic(appData) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-      const downloadDir = getDownloadDir();
-      const filePath = path.join(downloadDir, `${appData.id}.exe`);
+      // 1. Prioridad absoluta: Buscar si el ID existe en files.apps.json
+      const fileApp = filesAppsData.find((f) => f.id === appData.id);
 
-      function download(url) {
-        const file = fs.createWriteStream(filePath);
+      if (!fileApp) {
+        // 2. Fallback: Solo si no coincide el ID, usamos el método legacy (apps.json)
+        console.log(`App ${appData.id} no encontrado en files.apps.json. Usando método legacy.`);
+        return await legacyInstallApp(appData, resolve, reject);
+      }
 
-        https
-          .get(url, (res) => {
-            // 🔁 Redirecciones (GitHub)
-            if (res.statusCode === 302 || res.statusCode === 301) {
-              file.close();
-              fs.unlinkSync(filePath);
-              return download(res.headers.location);
-            }
+      // Si hay coincidencia, usamos el nuevo sistema de descargas
+      if (!downloadManager) {
+        downloadManager = new DownloadManager(mainWindow, ipcMain);
+      }
 
-            if (res.statusCode !== 200) {
-              file.close();
-              fs.unlinkSync(filePath);
-              if (mainWindow) {
-                mainWindow.setProgressBar(1, { mode: "error" });
-                mainWindow.flashFrame(true);
-                setTimeout(() => {
-                  if (mainWindow) {
-                    mainWindow.setProgressBar(-1);
-                    mainWindow.flashFrame(false);
-                  }
-                }, 3000);
-              }
-              return reject(new Error("Error descargando el archivo"));
-            }
+      if (mainWindow) mainWindow.setProgressBar(0, { mode: "normal" });
 
-            const totalLength = parseInt(res.headers["content-length"], 10);
-            let downloaded = 0;
+      // REDIRECCIÓN: Llevar al usuario a la página de progreso
+      if (mainWindow) {
+        mainWindow.loadFile(path.join(__dirname, "renderer/program-updates.html"));
+        // Nota: El proceso sigue en background aunque la página cambie
+      }
 
+      // Crear directorio temporal
+      const tempDir = path.join(DOWNLOADS_TEMP_DIR, appData.id, Date.now().toString());
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      try {
+        // Resolver variables de entorno en la ruta de extracción
+        const resolvedFileApp = {
+          ...fileApp,
+          extractPath: resolveWindowsPath(fileApp.extractPath),
+          checksumPath: fileApp.checksumPath ? resolveWindowsPath(fileApp.checksumPath) : undefined
+        };
+        await downloadManager.startDownload(appData.id, resolvedFileApp, tempDir);
+
+        if (mainWindow) {
+          mainWindow.setProgressBar(1, { mode: "normal" });
+          mainWindow.webContents.send("show-toast", `${appData.name} instalado correctamente`);
+          setTimeout(() => {
+            if (mainWindow) mainWindow.setProgressBar(-1);
+          }, 3000);
+        }
+
+        resolve(true);
+      } catch (err) {
+        console.error("Error en descarga:", err);
+        if (mainWindow) {
+          mainWindow.setProgressBar(1, { mode: "error" });
+          mainWindow.flashFrame(true);
+          setTimeout(() => {
             if (mainWindow) {
-              mainWindow.setProgressBar(0, { mode: "normal" });
+              mainWindow.setProgressBar(-1);
+              mainWindow.flashFrame(false);
             }
+          }, 3000);
+        }
+        reject(err);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
-            res.on("data", (chunk) => {
-              downloaded += chunk.length;
-              if (mainWindow && !isNaN(totalLength) && totalLength > 0) {
-                mainWindow.setProgressBar(downloaded / totalLength);
-              }
-            });
+async function legacyInstallApp(appData, resolve, reject) {
+  try {
+    const downloadDir = getDownloadDir();
+    const filePath = path.join(downloadDir, `${appData.id}.exe`);
 
-            res.pipe(file);
+    function download(url) {
+      const file = fs.createWriteStream(filePath);
 
-            file.on("finish", () => {
-              file.close(() => {
-                if (mainWindow) mainWindow.setProgressBar(2); // Indeterminate during install
-                // ▶ Ejecutar instalador
-                exec(`"${filePath}"`, (err) => {
-                  if (err) {
-                    if (mainWindow) mainWindow.setProgressBar(-1);
+      https
+        .get(url, (res) => {
+          // 🔁 Redirecciones (GitHub)
+          if (res.statusCode === 302 || res.statusCode === 301) {
+            file.close();
+            fs.unlinkSync(filePath);
+            return download(res.headers.location);
+          }
 
-                    // Código 2 = Cancelado en Inno Setup. 1 = Error genérico/Cancelado en otros.
-                    if (err.code === 2 || err.code === 1) {
-                      if (mainWindow) mainWindow.webContents.send("show-toast", "Instalación cancelada.");
-                      return reject(new Error("INSTALL_CANCELLED"));
-                    }
-
-                    console.error("Error ejecutando instalador:", err);
-                    if (mainWindow) {
-                      mainWindow.setProgressBar(1, { mode: "error" });
-                      mainWindow.flashFrame(true);
-                      setTimeout(() => {
-                        if (mainWindow) {
-                          mainWindow.setProgressBar(-1);
-                          mainWindow.flashFrame(false);
-                        }
-                      }, 3000);
-                    }
-                    return reject(err);
-                  }
-
-                  // 🧹 Borrar instalador después de 10s
-                  setTimeout(() => {
-                    if (fs.existsSync(filePath)) {
-                      fs.unlinkSync(filePath);
-                    }
-                  }, 10000);
-
-                  if (mainWindow) {
-                    mainWindow.setProgressBar(1, { mode: "normal" });
-                    setTimeout(() => {
-                      if (mainWindow) mainWindow.setProgressBar(-1);
-                    }, 3000);
-                  }
-
-                  resolve(true);
-                });
-              });
-            });
-          })
-          .on("error", (err) => {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          if (res.statusCode !== 200) {
+            file.close();
+            fs.unlinkSync(filePath);
             if (mainWindow) {
               mainWindow.setProgressBar(1, { mode: "error" });
               mainWindow.flashFrame(true);
@@ -1010,15 +1009,92 @@ async function installAppLogic(appData) {
                 }
               }, 3000);
             }
-            reject(err);
-          });
-      }
+            return reject(new Error("Error descargando el archivo"));
+          }
 
-      download(appData.download);
-    } catch (err) {
-      reject(err);
+          const totalLength = parseInt(res.headers["content-length"], 10);
+          let downloaded = 0;
+
+          if (mainWindow) {
+            mainWindow.setProgressBar(0, { mode: "normal" });
+          }
+
+          res.on("data", (chunk) => {
+            downloaded += chunk.length;
+            if (mainWindow && !isNaN(totalLength) && totalLength > 0) {
+              mainWindow.setProgressBar(downloaded / totalLength);
+            }
+          });
+
+          res.pipe(file);
+
+          file.on("finish", () => {
+            file.close(() => {
+              if (mainWindow) mainWindow.setProgressBar(2); // Indeterminate during install
+              // ▶ Ejecutar instalador
+              exec(`"${filePath}"`, (err) => {
+                if (err) {
+                  if (mainWindow) mainWindow.setProgressBar(-1);
+
+                  // Código 2 = Cancelado en Inno Setup. 1 = Error genérico/Cancelado en otros.
+                  if (err.code === 2 || err.code === 1) {
+                    if (mainWindow) mainWindow.webContents.send("show-toast", "Instalación cancelada.");
+                    return reject(new Error("INSTALL_CANCELLED"));
+                  }
+
+                  console.error("Error ejecutando instalador:", err);
+                  if (mainWindow) {
+                    mainWindow.setProgressBar(1, { mode: "error" });
+                    mainWindow.flashFrame(true);
+                    setTimeout(() => {
+                      if (mainWindow) {
+                        mainWindow.setProgressBar(-1);
+                        mainWindow.flashFrame(false);
+                      }
+                    }, 3000);
+                  }
+                  return reject(err);
+                }
+
+                // 🧹 Borrar instalador después de 10s
+                setTimeout(() => {
+                  if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                  }
+                }, 10000);
+
+                if (mainWindow) {
+                  mainWindow.setProgressBar(1, { mode: "normal" });
+                  setTimeout(() => {
+                    if (mainWindow) mainWindow.setProgressBar(-1);
+                  }, 3000);
+                }
+
+                resolve(true);
+              });
+            });
+          });
+        })
+        .on("error", (err) => {
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          if (mainWindow) {
+            mainWindow.setProgressBar(1, { mode: "error" });
+            mainWindow.flashFrame(true);
+            setTimeout(() => {
+              if (mainWindow) {
+                mainWindow.setProgressBar(-1);
+                mainWindow.flashFrame(false);
+              }
+            }, 3000);
+          }
+          reject(err);
+        });
     }
-  });
+
+    download(appData.download);
+  } catch (err) {
+    reject(err);
+  }
 }
 
 ipcMain.handle("install-app", async (_, appData) => {
@@ -1126,6 +1202,84 @@ ipcMain.handle("open-main-view", () => {
 // -----------------------------
 ipcMain.handle("get-app-version", () => {
   return app.getVersion();
+});
+
+// =====================================
+// MANEJO DE DESCARGAS DE ARCHIVOS
+// =====================================
+ipcMain.handle("get-file-apps", () => {
+  return filesAppsData;
+});
+
+ipcMain.handle("start-file-download", async (_, fileAppId) => {
+  try {
+    if (!downloadManager) {
+      downloadManager = new DownloadManager(mainWindow, ipcMain);
+    }
+
+    // Intentar buscar en el sistema nuevo
+    const fileApp = filesAppsData.find((f) => f.id === fileAppId);
+    
+    if (!fileApp) {
+      // Fallback: Si se solicita desde el centro de descargas pero no está en files.apps.json,
+      // intentamos buscarlo en appsData para no romper el flujo.
+      const appItem = appsData.find(a => a.id === fileAppId);
+      if (appItem) {
+        installAppLogic(appItem).catch(console.error);
+        return { success: true, message: "Iniciando instalación legacy" };
+      }
+      throw new Error(`Aplicación no encontrada: ${fileAppId}`);
+    }
+
+    const tempDir = path.join(DOWNLOADS_TEMP_DIR, fileAppId, Date.now().toString());
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    const resolvedFileApp = {
+      ...fileApp,
+      extractPath: resolveWindowsPath(fileApp.extractPath),
+      checksumPath: fileApp.checksumPath ? resolveWindowsPath(fileApp.checksumPath) : undefined
+    };
+    downloadManager.startDownload(fileAppId, resolvedFileApp, tempDir).catch((err) => {
+      console.error("Error en descarga:", err);
+    });
+
+    return { success: true, message: "Descarga iniciada" };
+  } catch (error) {
+    console.error(`Error iniciando descarga: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle("pause-download", (_, downloadId) => {
+  if (downloadManager) {
+    downloadManager.pauseDownload(downloadId);
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle("cancel-download", async (_, downloadId) => {
+  if (downloadManager) {
+    await downloadManager.cancelDownload(downloadId);
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle("get-download-status", (_, downloadId) => {
+  if (downloadManager) {
+    return downloadManager.getDownloadStatus(downloadId);
+  }
+  return null;
+});
+
+ipcMain.handle("get-all-downloads", () => {
+  if (downloadManager) {
+    return downloadManager.getAllDownloads();
+  }
+  return [];
 });
 
 // =====================================
