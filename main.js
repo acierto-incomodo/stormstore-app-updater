@@ -6,21 +6,149 @@ const {
   session,
   nativeTheme,
   dialog,
+  protocol,
+  net,
+  Tray,
+  Menu,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
+const { pathToFileURL } = require("url");
 const { spawn, exec } = require("child_process");
 const { autoUpdater } = require("electron-updater");
 const SteamPath = require("steam-path");
 const gameScanner = require("@equal-games/game-scanner");
 const DiscordRPC = require("discord-rpc");
 
-const apps = require("./apps.json");
+let appsData = require("./apps.json");
+let isOffline = true; // Por defecto asumimos offline hasta que la sincronización diga lo contrario
+
+const ICON_SIZES = [
+  "256x256",
+  "512x512",
+  "1024x1024",
+  "2048x2048",
+  "4096x4096",
+];
+let ICONS_CACHE_DIR;
+let APPS_JSON_CACHE;
+const SETTINGS_PATH = path.join(
+  app.getPath("appData"),
+  "StormGamesStudios",
+  "StormStore",
+  "settings.json",
+);
+
+const REMOTE_APPS_URL =
+  "https://acierto-incomodo.github.io/StormStore/assets/apps.json";
+const REMOTE_ICONS_BASE =
+  "https://acierto-incomodo.github.io/StormStore/assets/apps-size/";
 
 // Variables globales
 let mainWindow;
 let updateInfo = null;
+let tray = null;
+
+// =====================================
+// GESTIÓN DE AJUSTES
+// =====================================
+function loadSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_PATH)) {
+      return JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf8"));
+    }
+  } catch (e) {
+    console.error("Error leyendo ajustes:", e);
+  }
+  return {
+    auto_updates: false,
+    start_with_windows: false,
+    start_minimized: false,
+    show_tray: true,
+  };
+}
+
+function applySettings(settings) {
+  // 1. Iniciar con Windows
+  if (app.isPackaged) {
+    app.setLoginItemSettings({
+      openAtLogin: settings.start_with_windows,
+      path: process.execPath,
+      args: settings.start_minimized ? ["--start-minimized"] : [],
+    });
+  }
+
+  // 2. Tray Icon
+  if (settings.show_tray) {
+    createTray();
+  } else {
+    if (tray) {
+      tray.destroy();
+      tray = null;
+    }
+  }
+}
+
+function saveSettings(newSettings) {
+  try {
+    const dir = path.dirname(SETTINGS_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(SETTINGS_PATH, JSON.stringify(newSettings, null, 2));
+    applySettings(newSettings);
+  } catch (err) {
+    console.error("Error guardando ajustes:", err);
+  }
+}
+
+function createTray() {
+  if (tray) return;
+  tray = new Tray(path.join(__dirname, "assets/app.ico"));
+  const contextMenu = Menu.buildFromTemplate([
+    { label: "Abrir StormStore", click: () => {
+      mainWindow.show();
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }},
+    { label: "Modo StormVortex", click: () => {
+      mainWindow.show();
+      mainWindow.setFullScreen(true);
+      mainWindow.loadFile(path.join(__dirname, "renderer/bigpicture.html"));
+      setActivity();
+      mainWindow.focus();
+    }},
+    { label: "Buscar actualizaciones", click: () => {
+      mainWindow.show();
+      mainWindow.loadFile(path.join(__dirname, "renderer/updates.html"));
+      autoUpdater.checkForUpdates();
+    }},
+    { type: "separator" },
+    { label: "Reiniciar StormStore", click: () => {
+      app.isQuiting = true;
+      app.relaunch();
+      app.exit(0);
+    }},
+    { type: "separator" },
+    {
+      label: "Salir",
+      click: () => {
+        app.isQuiting = true;
+        app.quit();
+      },
+    },
+  ]);
+  tray.setToolTip("StormStore");
+  tray.setContextMenu(contextMenu);
+  tray.on("click", () => {
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+}
 
 // =====================================
 // DISCORD RPC
@@ -91,6 +219,18 @@ if (process.defaultApp) {
 } else {
   app.setAsDefaultProtocolClient("stormstore");
 }
+
+// Registro de esquema para iconos locales (necesario antes de app.ready)
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "storm-asset",
+    privileges: {
+      secure: true,
+      standard: true,
+      supportFetchAPI: true,
+    },
+  },
+]);
 
 // =====================================
 // CONFIGURACIÓN DE ACTUALIZACIONES
@@ -173,6 +313,7 @@ function createWindow() {
     minHeight: 750,
     backgroundColor: "#00000000",
     frame: false,
+    show: false,
     backgroundMaterial: "mica",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "assets/app.ico"),
@@ -184,7 +325,21 @@ function createWindow() {
 
   mainWindow = win;
 
-  const startInBigPicture = process.argv.includes("--StormVortex");
+  const vortexFlags = [
+    "--StormVortex",
+    "--stormvortex",
+    "--vortex",
+    "--bigpicture",
+    "--Vortex",
+    "--BigPicture",
+    "--Bigpicture",
+  ];
+  const settings = loadSettings();
+  const startInBigPicture = process.argv.some((arg) =>
+    vortexFlags.includes(arg),
+  );
+  const isSilentStart = (settings.start_minimized || process.argv.includes("--start-minimized")) && !startInBigPicture;
+
   win.loadFile(
     path.join(
       __dirname,
@@ -192,11 +347,28 @@ function createWindow() {
     ),
   );
 
-  if (startInBigPicture) {
-    win.setFullScreen(true);
-  } else {
-    win.maximize();
-  }
+  win.once("ready-to-show", () => {
+    if (startInBigPicture) {
+      win.setFullScreen(true);
+      win.show();
+    } else if (isSilentStart) {
+      // Si es inicio silencioso, no llamamos a win.show(). 
+      // La ventana permanece oculta y solo el icono de la bandeja será visible.
+      console.log("StormStore: Iniciando en modo silencioso (solo bandeja).");
+    } else {
+      win.maximize();
+      win.show();
+    }
+  });
+
+  win.on("close", (event) => {
+    const currentSettings = loadSettings();
+    if (currentSettings.show_tray && !app.isQuiting) {
+      event.preventDefault();
+      win.hide();
+    }
+    return false;
+  });
 
   win.on("maximize", () => {
     win.webContents.send("window-maximized");
@@ -321,22 +493,58 @@ async function runApp(exePath, requiresSteam) {
   }
 }
 
-function handleProtocolUrl(url) {
+async function showVirusWarning(appName) {
+  if (!mainWindow) return true;
+
+  return new Promise((resolve) => {
+    mainWindow.webContents.send("show-virus-alert", appName);
+
+    ipcMain.once("virus-alert-response", (event, response) => {
+      resolve(response);
+    });
+  });
+}
+
+async function handleProtocolUrl(url) {
   if (!url || !mainWindow) return;
   const prefix = "stormstore://run/";
   if (url.startsWith(prefix)) {
     const id = url.substring(prefix.length).replace(/\/$/, "");
-    const appItem = apps.find((a) => a.id === id);
+    const appItem = appsData.find((a) => a.id === id);
+
+    if (appItem && appItem["virus-alert"] === "alert") {
+      const proceed = await showVirusWarning(appItem.name);
+      if (!proceed) return;
+    }
 
     if (appItem) {
-      const installed = appItem.paths.some((p) => findExecutable(p) !== null);
-      if (installed) {
-        runApp(appItem.paths[0], appItem.steam === "si");
+      if (appItem["virus-alert"] === "alert") {
+        const proceed = await showVirusWarning(appItem.name);
+        if (!proceed) return;
+      }
+
+      const validPath = appItem.paths.find((p) => findExecutable(p) !== null);
+      if (validPath) {
+        runApp(validPath, appItem.steam === "si");
       } else {
         mainWindow.webContents.send(
           "show-toast",
-          `La aplicación '${appItem.name}' no está instalada.`,
+          `La aplicación '${appItem.name}' no está instalada. Iniciando instalación...`,
         );
+        installAppLogic(appItem)
+          .then(() => {
+            mainWindow.webContents.send(
+              "show-toast",
+              `Instalación de '${appItem.name}' completada.`,
+            );
+          })
+          .catch((err) => {
+            console.error(err);
+            mainWindow.webContents.send(
+              "show-toast",
+              `Error instalando '${appItem.name}'.`,
+            );
+          });
       }
     } else {
       mainWindow.webContents.send(
@@ -347,14 +555,157 @@ function handleProtocolUrl(url) {
   }
 }
 
+async function downloadFile(url, dest) {
+  const tempDest = dest + ".tmp";
+  return new Promise((resolve, reject) => {
+    const download = (downloadUrl) => {
+      const file = fs.createWriteStream(tempDest);
+      https
+        .get(downloadUrl, (res) => {
+          if (res.statusCode === 301 || res.statusCode === 302) {
+            file.close();
+            fs.unlink(tempDest, () => {});
+            return download(res.headers.location);
+          }
+          if (res.statusCode !== 200) {
+            file.close();
+            fs.unlink(tempDest, () => {});
+            return reject(new Error(`Status ${res.statusCode}`));
+          }
+          res.pipe(file);
+          file.on("finish", () => {
+            file.close(() => {
+              // Renombrado atómico: Solo movemos el archivo al destino final cuando está completo
+              fs.rename(tempDest, dest, (err) => {
+                if (err) {
+                  fs.unlink(tempDest, () => {});
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              });
+            });
+          });
+        })
+        .on("error", (err) => {
+          file.close();
+          fs.unlink(tempDest, () => {});
+          reject(err);
+        });
+    };
+    download(url);
+  });
+}
+
+async function syncRemoteData() {
+  if (!fs.existsSync(ICONS_CACHE_DIR)) {
+    fs.mkdirSync(ICONS_CACHE_DIR, { recursive: true });
+  }
+
+  // Asegurar que existan las subcarpetas para cada tamaño
+  ICON_SIZES.forEach((size) => {
+    const dir = path.join(ICONS_CACHE_DIR, size);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  });
+
+  try {
+    const data = await new Promise((resolve, reject) => {
+      const req = https.get(REMOTE_APPS_URL, (res) => {
+        if (res.statusCode !== 200)
+          return reject(new Error("Error fetching apps.json"));
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+      req.on("error", reject);
+      req.end();
+    });
+
+    appsData = data;
+    isOffline = false; // Sincronización exitosa = Estamos online
+    fs.writeFileSync(APPS_JSON_CACHE, JSON.stringify(appsData, null, 2));
+
+    // Notificar al frontend que los datos han sido actualizados
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(
+        "show-toast",
+        "Catálogo de aplicaciones sincronizado.",
+      );
+    }
+
+    // DESCARGA DE ICONOS: Siempre verificamos si faltan en la caché local
+    for (const item of appsData) {
+      const fileName = path.basename(item.icon);
+      const prioritySize = "1024x1024";
+
+      // 1. Descargar prioridad (1024x1024) primero y esperar (await) para asegurar disponibilidad inmediata
+      const priorityPath = path.join(ICONS_CACHE_DIR, prioritySize, fileName);
+      if (!fs.existsSync(priorityPath)) {
+        await downloadFile(
+          `${REMOTE_ICONS_BASE}${prioritySize}/${fileName}`,
+          priorityPath,
+        ).catch(() => {});
+      }
+
+      // 2. Descargar el resto de tamaños en segundo plano para optimizar
+      ICON_SIZES.filter((s) => s !== prioritySize).forEach((size) => {
+        const localPath = path.join(ICONS_CACHE_DIR, size, fileName);
+        if (!fs.existsSync(localPath)) {
+          downloadFile(
+            `${REMOTE_ICONS_BASE}${size}/${fileName}`,
+            localPath,
+          ).catch(() => {});
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Sync failed, using cache:", err.message);
+    isOffline = true; // Fallo en la red = Modo offline
+    if (fs.existsSync(APPS_JSON_CACHE)) {
+      appsData = JSON.parse(fs.readFileSync(APPS_JSON_CACHE, "utf8"));
+    }
+  }
+}
+
 // -----------------------------
 // IPC
 // -----------------------------
 ipcMain.handle("get-apps", () => {
-  return apps.map((appItem) => {
-    const installed = appItem.paths.some((p) => {
-      return findExecutable(p) !== null;
-    });
+  return appsData.map((appItem) => {
+    const fileName = path.basename(appItem.icon);
+    const local1024 = path.join(ICONS_CACHE_DIR, "1024x1024", fileName);
+
+    let iconUrl;
+
+    // Si existe la versión de 1024 localmente, la usamos siempre (prioridad absoluta)
+    if (fs.existsSync(local1024)) {
+      iconUrl = `storm-asset://1024x1024/${fileName}`;
+    } else if (isOffline) {
+      // Si estamos offline y no hay 1024, buscamos cualquier otro tamaño disponible en caché
+      const availableSize = ICON_SIZES.find((s) =>
+        fs.existsSync(path.join(ICONS_CACHE_DIR, s, fileName)),
+      );
+      iconUrl = availableSize
+        ? `storm-asset://${availableSize}/${fileName}`
+        : appItem.icon;
+    } else {
+      // En modo online sin caché de 1024, pedimos la de 1024 remota por defecto
+      iconUrl = `${REMOTE_ICONS_BASE}1024x1024/${fileName}`;
+    }
+
+    let executablePath = null;
+    for (const p of appItem.paths) {
+      if (findExecutable(p) !== null) {
+        executablePath = p;
+        break;
+      }
+    }
 
     let uninstallExists = false;
     if (appItem.uninstall) {
@@ -364,7 +715,9 @@ ipcMain.handle("get-apps", () => {
 
     return {
       ...appItem,
-      installed,
+      icon: iconUrl,
+      installed: executablePath !== null,
+      executablePath,
       uninstallExists,
     };
   });
@@ -499,6 +852,7 @@ ipcMain.handle("get-steam-games", async () => {
                       ? path.join(lib, "common", installDir)
                       : null,
                     installed: true,
+                    executablePath: `steam://rungameid/${appId}`,
                     steam: "si",
                     wifi: "no",
                   });
@@ -537,6 +891,7 @@ ipcMain.handle("get-epic-games", async () => {
       ],
       installPath: game.path,
       installed: true,
+      executablePath: `com.epicgames.launcher://apps/${game.id}?action=launch&silent=true`,
       epic: "si",
       wifi: "no",
     }));
@@ -546,31 +901,7 @@ ipcMain.handle("get-epic-games", async () => {
   }
 });
 
-ipcMain.handle("install-app", async (_, appData) => {
-  // ---------------------------------------------------------
-  // 1. Pre-instalación (Ej: Runtimes .NET, VC++, etc.)
-  // ---------------------------------------------------------
-  if (appData.preInstall && Array.isArray(appData.preInstall)) {
-    for (const item of appData.preInstall) {
-      // Resolvemos la ruta relativa (asumiendo base en renderer como los iconos: ../assets/...)
-      const prePath = path.join(__dirname, "renderer", item.path);
-
-      if (fs.existsSync(prePath)) {
-        await new Promise((resolvePre, rejectPre) => {
-          exec(`"${prePath}" ${item.args || ""}`, (err) => {
-            if (err)
-              rejectPre(
-                new Error(
-                  `Error en pre-instalación (${item.path}): ${err.message}`,
-                ),
-              );
-            else resolvePre();
-          });
-        });
-      }
-    }
-  }
-
+async function installAppLogic(appData) {
   return new Promise((resolve, reject) => {
     try {
       const downloadDir = getDownloadDir();
@@ -626,6 +957,14 @@ ipcMain.handle("install-app", async (_, appData) => {
                 // ▶ Ejecutar instalador
                 exec(`"${filePath}"`, (err) => {
                   if (err) {
+                    if (mainWindow) mainWindow.setProgressBar(-1);
+
+                    // Código 2 = Cancelado en Inno Setup. 1 = Error genérico/Cancelado en otros.
+                    if (err.code === 2 || err.code === 1) {
+                      if (mainWindow) mainWindow.webContents.send("show-toast", "Instalación cancelada.");
+                      return reject(new Error("INSTALL_CANCELLED"));
+                    }
+
                     console.error("Error ejecutando instalador:", err);
                     if (mainWindow) {
                       mainWindow.setProgressBar(1, { mode: "error" });
@@ -680,9 +1019,22 @@ ipcMain.handle("install-app", async (_, appData) => {
       reject(err);
     }
   });
+}
+
+ipcMain.handle("install-app", async (_, appData) => {
+  if (appData["virus-alert"] === "alert") {
+    const proceed = await showVirusWarning(appData.name);
+    if (!proceed) return false;
+  }
+  return await installAppLogic(appData);
 });
 
 ipcMain.handle("open-app", async (_, exePath, requiresSteam) => {
+  const appItem = appsData.find((a) => a.paths.includes(exePath));
+  if (appItem && appItem["virus-alert"] === "alert") {
+    const proceed = await showVirusWarning(appItem.name);
+    if (!proceed) return false;
+  }
   return await runApp(exePath, requiresSteam);
 });
 
@@ -734,9 +1086,18 @@ ipcMain.handle("uninstall-app", async (_, uninstallPath) => {
       throw new Error("Desinstalador no encontrado");
     }
 
-    exec(`"${resolved}"`);
+    await new Promise((resolve, reject) => {
+      exec(`"${resolved}"`, (err) => {
+        if (err) return reject(err);
+        resolve(true);
+      });
+    });
     return true;
   } catch (err) {
+    if (err.code === 2 || err.code === 1) {
+      if (mainWindow) mainWindow.webContents.send("show-toast", "Desinstalación cancelada.");
+      return false;
+    }
     console.error("Error al desinstalar:", err.message);
     return false;
   }
@@ -747,6 +1108,7 @@ ipcMain.handle("open-big-picture", () => {
     mainWindow.setFullScreen(true);
     mainWindow.loadFile(path.join(__dirname, "renderer/bigpicture.html"));
     setActivity();
+    mainWindow.focus();
   }
 });
 
@@ -755,6 +1117,7 @@ ipcMain.handle("open-main-view", () => {
     mainWindow.setFullScreen(false);
     mainWindow.loadFile(path.join(__dirname, "renderer/index.html"));
     setActivity();
+    mainWindow.focus();
   }
 });
 
@@ -804,10 +1167,13 @@ ipcMain.on("window-maximize", () => {
   if (mainWindow?.isMaximized()) mainWindow.unmaximize();
   else mainWindow?.maximize();
 });
-ipcMain.on("window-close", () => mainWindow?.close());
+ipcMain.on("window-close", () => {
+  mainWindow?.close();
+});
 ipcMain.handle("is-maximized", () => mainWindow?.isMaximized());
 
 ipcMain.on("app-quit", () => {
+  app.isQuiting = true;
   app.quit();
 });
 
@@ -815,6 +1181,36 @@ ipcMain.on("set-discord-activity", (event, activity) => {
   // Reset to default and then merge the new activity to avoid stale data
   rpcActivity = { ...defaultRpcActivity, ...activity };
   setActivity();
+});
+
+ipcMain.handle("sync-remote-data", async () => {
+  await syncRemoteData();
+  return true;
+});
+
+ipcMain.handle("get-settings", () => loadSettings());
+ipcMain.on("save-settings", (event, settings) => saveSettings(settings));
+
+ipcMain.handle("clear-cache", async () => {
+  try {
+    const cacheDir = path.join(
+      app.getPath("appData"),
+      "StormGamesStudios",
+      "StormStore",
+      "StormStoreCache",
+    );
+
+    if (fs.existsSync(cacheDir)) {
+      fs.rmSync(cacheDir, { recursive: true, force: true });
+    }
+
+    // Reiniciar la sincronización para descargar todo de nuevo desde el servidor
+    await syncRemoteData();
+    return true;
+  } catch (err) {
+    console.error("Error al limpiar caché:", err);
+    return false;
+  }
 });
 
 // =====================================
@@ -835,6 +1231,7 @@ if (!gotLock) {
 } else {
   app.on("second-instance", (event, argv, workingDirectory) => {
     if (mainWindow) {
+      if (!mainWindow.isVisible()) mainWindow.show();
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
@@ -845,6 +1242,55 @@ if (!gotLock) {
   app.whenReady().then(() => {
     // Forzar el tema oscuro para toda la aplicación
     nativeTheme.themeSource = "dark";
+
+    // Configurar tareas de la Jump List para Windows
+    if (process.platform === "win32") {
+      app.setUserTasks([
+        {
+          program: process.execPath,
+          arguments: "--StormVortex",
+          iconPath: path.join(__dirname, "assets/app.ico"),
+          iconIndex: 0,
+          title: "Modo StormVortex",
+          description: "Inicia StormStore directamente en modo Big Picture",
+        },
+        {
+          program: process.execPath,
+          arguments: "--start-minimized",
+          iconPath: path.join(__dirname, "assets/app.ico"),
+          iconIndex: 0,
+          title: "Iniciar en segundo plano",
+          description:
+            "Abre la aplicación minimizada en la bandeja del sistema",
+        },
+      ]);
+    }
+
+    const CACHE_DIR = path.join(
+      app.getPath("appData"),
+      "StormGamesStudios",
+      "StormStore",
+      "StormStoreCache",
+    );
+    ICONS_CACHE_DIR = path.join(CACHE_DIR, "icons");
+    APPS_JSON_CACHE = path.join(CACHE_DIR, "apps.json");
+
+    if (fs.existsSync(APPS_JSON_CACHE)) {
+      try {
+        appsData = JSON.parse(fs.readFileSync(APPS_JSON_CACHE, "utf8"));
+      } catch (e) {}
+    }
+
+    // Manejador del protocolo storm-asset://
+    protocol.handle("storm-asset", (request) => {
+      // La URL ahora incluye el tamaño, ej: storm-asset://1024x1024/icono.png
+      const assetPath = request.url.replace("storm-asset://", "");
+      const filePath = path.join(ICONS_CACHE_DIR, assetPath);
+      return net.fetch(pathToFileURL(filePath).toString());
+    });
+
+    syncRemoteData();
+
     // Permisos para WebHID
     session.defaultSession.setDevicePermissionHandler((details) => {
       if (details.deviceType === "hid" && details.origin === "file://") {
@@ -853,6 +1299,7 @@ if (!gotLock) {
       return false;
     });
 
+    applySettings(loadSettings());
     createWindow();
     const url = process.argv.find((arg) => arg.startsWith("stormstore://"));
     if (url) handleProtocolUrl(url);

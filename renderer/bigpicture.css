@@ -13,6 +13,11 @@
   font-family: "Roboto", sans-serif;
 }
 
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -24,6 +29,7 @@ body {
   display: flex;
   flex-direction: column;
   cursor: none;
+  user-select: none;
 }
 
 #background {
@@ -95,8 +101,9 @@ body {
 
 #grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, 220px);
   gap: 30px;
+  justify-content: center;
   padding: 20px 50px;
   overflow-y: auto;
   align-content: start;
@@ -186,8 +193,21 @@ body {
 }
 
 /* If the icon for WiFi is right after Steam's, push it down */
-.bp-req-badge.steam-req + .bp-req-badge.wifi-req {
-  top: 46px; /* 10px (top) + 32px (height) + 4px (gap) */
+.bp-req-badge + .bp-req-badge {
+  top: 46px;
+}
+
+.bp-req-badge + .bp-req-badge + .bp-req-badge {
+  top: 82px;
+}
+
+.bp-req-badge + .bp-req-badge + .bp-req-badge + .bp-req-badge {
+  top: 118px;
+}
+
+.bp-req-badge.virus-req img {
+  filter: invert(34%) sepia(85%) saturate(2443%) hue-rotate(334deg)
+    brightness(91%) contrast(101%);
 }
 
 /* Show text when card is selected */
@@ -297,4 +317,31 @@ body {
   background: var(--bp-highlight-color);
   border-color: var(--bp-highlight-color);
   color: #000;
+}
+
+/* --- Intro Video --- */
+.intro-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    opacity 0.8s ease,
+    visibility 0.8s;
+}
+.intro-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+#intro-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }

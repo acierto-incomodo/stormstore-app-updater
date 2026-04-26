@@ -36,4 +36,12 @@ contextBridge.exposeInMainWorld("api", {
   quitApp: () => ipcRenderer.send("app-quit"),
   setDiscordActivity: (activity) =>
     ipcRenderer.send("set-discord-activity", activity),
+  getSettings: () => ipcRenderer.invoke("get-settings"),
+  saveSettings: (settings) => ipcRenderer.send("save-settings", settings),
+  launchApp: () => ipcRenderer.send("launch-app"),
+  onShowVirusAlert: (callback) => ipcRenderer.on("show-virus-alert", callback),
+  sendVirusAlertResponse: (response) =>
+    ipcRenderer.send("virus-alert-response", response),
+  clearCache: () => ipcRenderer.invoke("clear-cache"),
+  syncRemoteData: () => ipcRenderer.invoke("sync-remote-data"),
 });

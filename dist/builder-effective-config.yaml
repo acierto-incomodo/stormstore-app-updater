@@ -1,0 +1,54 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.stormgamesstudios.stormstore
+productName: StormStore
+publish:
+  provider: github
+  owner: acierto-incomodo
+  repo: StormStore
+protocols:
+  - name: StormStore
+    schemes:
+      - stormstore
+win:
+  target: nsis
+  icon: assets/app.ico
+nsis:
+  oneClick: true
+  allowToChangeInstallationDirectory: false
+  createStartMenuShortcut: true
+  createDesktopShortcut: true
+  include: build/v2-installer.nsh
+  differentialPackage: true
+extraResources:
+  - filter:
+      - assets/extraFiles/7zr.exe
+files:
+  - filter:
+      - package.json
+      - main.js
+      - preload.js
+      - apps.json
+      - renderer/**/*
+      - assets/**/*
+      - settings.json
+      - '!assets/extraFiles/**/*'
+      - '!assets/media/trailers/**/*'
+      - '!assets/apps-4096x4096/**/*'
+      - '!assets/apps-new-quality/**/*'
+      - '!assets/apps-old/**/*'
+      - '!assets/apps-original/**/*'
+      - '!assets/apps-to-make/**/*'
+      - '!setup/**/*'
+      - '!**/*.ps1'
+      - '!**/*.bat'
+      - '!**/*.txt'
+      - '!**/*.md'
+      - '!**/*.sh'
+      - '!package-*.json'
+      - '!hacer'
+      - '!apps.json.*'
+      - '!assets/apps/**/*'
+      - '!assets/apps-size/**/*'
+electronVersion: 41.3.0

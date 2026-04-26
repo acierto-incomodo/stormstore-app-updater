@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  function showToast(message) {
+  function showToast(message, duration = 3000) {
     let toast = document.getElementById("toast-notification");
     if (!toast) {
       toast = document.createElement("div");
@@ -7,15 +7,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       toast.className = "toast-notification";
       document.body.appendChild(toast);
     }
+    playSound("toast.mp3");
     toast.textContent = message;
     toast.classList.add("show");
     setTimeout(() => {
       toast.classList.remove("show");
-    }, 3000);
+    }, duration);
   }
-  window.api.onShowToast((_event, message) => {
-    showToast(message);
+  window.api.onShowToast((_event, message, duration) => {
+    showToast(message, duration);
   });
+
+  function playSound(soundFile) {
+    new Audio(`../assets/media/sounds/${soundFile}`).play();
+  }
 
   // DOM Elements
   const gridContainer = document.getElementById("grid-container");
@@ -28,6 +33,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const menuUpdatesButton = document.getElementById("bp-menu-updates");
   const menuQuitAppButton = document.getElementById("bp-menu-quit-app");
   const menuTutorialButton = document.getElementById("bp-menu-tutorial");
+  const introOverlay = document.getElementById("intro-overlay");
+  const introVideo = document.getElementById("intro-video");
 
   // State
   let currentView = "grid";
@@ -49,6 +56,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   // New state for single button press
   let prevButtons = [];
   let firstInputPoll = true;
+
+  function finishIntro() {
+    if (!introOverlay || introOverlay.classList.contains("hidden")) return;
+    introOverlay.classList.add("hidden");
+    setTimeout(() => {
+      introOverlay.style.display = "none";
+    }, 800);
+  }
 
   // Icon Mapping
   const iconMap = {
@@ -172,11 +187,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     games.forEach((game, index) => {
       const card = document.createElement("div");
       card.className = "game-card";
-      card.style.backgroundImage = `url('${game.icon}')`;
+      card.style.backgroundImage = `url('${game.icon}'), url('../assets/icons/not-found.svg')`;
       card.dataset.index = index;
       card.dataset.id = game.id;
 
       // --- Badges de Requisitos ---
+      if (game.verified === "true") {
+        const verifiedBadge = document.createElement("div");
+        verifiedBadge.className = "bp-req-badge verified-req";
+
+        const verifiedIcon = document.createElement("img");
+        verifiedIcon.src = "../assets/icons/verified.svg";
+
+        const verifiedText = document.createElement("span");
+        verifiedText.textContent = "Verificado";
+
+        verifiedBadge.append(verifiedIcon, verifiedText);
+        card.appendChild(verifiedBadge);
+      }
+
       if (game.steam === "si") {
         const steamBadge = document.createElement("div");
         steamBadge.className = "bp-req-badge steam-req";
@@ -205,6 +234,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         card.appendChild(wifiBadge);
       }
 
+      if (game["virus-alert"] === "alert") {
+        const virusBadge = document.createElement("div");
+        virusBadge.className = "bp-req-badge virus-req";
+
+        const virusIcon = document.createElement("img");
+        virusIcon.src = "../assets/icons/virus.svg";
+
+        const virusText = document.createElement("span");
+        virusText.textContent = "Virus";
+
+        virusBadge.append(virusIcon, virusText);
+        card.appendChild(virusBadge);
+      }
+
       const titleOverlay = document.createElement("div");
       titleOverlay.className = "title-overlay";
       titleOverlay.textContent = game.name;
@@ -225,10 +268,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     newIndex = Math.max(0, Math.min(newIndex, gridItems.length - 1));
     currentGridIndex = newIndex;
     const selectedCard = gridItems[currentGridIndex];
+    if (scroll) playSound("move.mp3");
     selectedCard.classList.add("selected");
     const game = games[currentGridIndex];
     gameTitle.textContent = game.name;
-    background.style.backgroundImage = `url('${game.icon}')`;
+    background.style.backgroundImage = `url('${game.icon}'), url('../assets/icons/not-found.svg')`;
     if (scroll) {
       selectedCard.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -271,7 +315,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   function launchGame() {
     const game = games[currentGridIndex];
     if (game) {
-      window.api.openApp(game.paths[0], game.steam === "si");
+      window.api.openApp(
+        game.executablePath || game.paths[0],
+        game.steam === "si",
+      );
     }
   }
 
@@ -295,6 +342,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function openMenu() {
     if (isMenuOpen) return;
     isMenuOpen = true;
+    playSound("select.mp3");
     menuOverlay.classList.add("active");
     const modalActions = menuBackButton.parentElement;
 
@@ -336,6 +384,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function closeMenu() {
     if (!isMenuOpen) return;
     isMenuOpen = false;
+    playSound("back.mp3");
     menuOverlay.classList.remove("active");
     // Restore footer for grid view
     updateFooter([
@@ -350,11 +399,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (newIndex < 0) newIndex = menuItems.length - 1;
     if (newIndex >= menuItems.length) newIndex = 0;
     menuCurrentIndex = newIndex;
+    playSound("move.mp3");
     menuItems[menuCurrentIndex]?.classList.add("selected");
   }
 
   // --- Keyboard Support ---
   function handleKeyboardInput(e) {
+    if (introOverlay && introOverlay.style.display !== "none") {
+      finishIntro();
+      e.preventDefault();
+      return;
+    }
     if (isMenuOpen) {
       switch (e.key) {
         case "ArrowUp":
@@ -475,7 +530,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       // Button presses - check for single press
-      if (isMenuOpen) {
+      if (introOverlay && introOverlay.style.display !== "none") {
+        if (isNewPress(0) || isNewPress(1) || isNewPress(9)) {
+          finishIntro();
+          actionTaken = true;
+        }
+      } else if (isMenuOpen) {
         if (isNewPress(0)) {
           menuItems[menuCurrentIndex].click();
           actionTaken = true;
@@ -527,6 +587,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     loadAllGames();
     requestAnimationFrame(gamepadLoop);
+    if (introVideo) {
+      introVideo.play().catch(() => finishIntro());
+      introVideo.onended = finishIntro;
+    }
   }
 
   // --- Eventos de ratón, teclado y menú ---

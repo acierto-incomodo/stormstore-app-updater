@@ -76,6 +76,13 @@
               style="width: 20px; height: 20px"
             />
           </button>
+          <button class="control-btn" id="open-settings-header" title="Ajustes">
+            <img
+              src="../assets/icons/settings.svg"
+              alt="Ajustes"
+              style="width: 20px; height: 20px"
+            />
+          </button>
           <button class="control-btn" id="min-btn">─</button>
           <button class="control-btn" id="max-btn">◻</button>
           <button class="control-btn close" id="close-btn">✕</button>
@@ -131,7 +138,7 @@
         new Audio(`../assets/media/sounds/${soundFile}`).play();
       }
 
-      function showToast(message) {
+      function showToast(message, duration = 3000) {
         let toast = document.getElementById("toast-notification");
         if (!toast) {
           toast = document.createElement("div");
@@ -139,11 +146,12 @@
           toast.className = "toast-notification";
           document.body.appendChild(toast);
         }
+        playSound("toast.mp3");
         toast.textContent = message;
         toast.classList.add("show");
         setTimeout(() => {
           toast.classList.remove("show");
-        }, 3000);
+        }, duration);
       }
 
       // Mostrar versión
@@ -153,12 +161,13 @@
         });
       }
 
-      window.api.onShowToast((_event, message) => {
-        showToast(message);
+      window.api.onShowToast((_event, message, duration) => {
+        showToast(message, duration);
       });
 
       // Botón Volver
       document.getElementById("back-btn").addEventListener("click", () => {
+        playSound("back.mp3");
         window.history.back();
       });
 
@@ -187,6 +196,11 @@
       document.getElementById("open-info")?.addEventListener("click", () => {
         window.location.href = "info.html";
       });
+      document
+        .getElementById("open-settings-header")
+        ?.addEventListener("click", () => {
+          window.location.href = "settings.html";
+        });
 
       // Controles de ventana
       document
@@ -265,6 +279,9 @@
         const img = document.createElement("img");
         img.src = app.icon;
         img.className = "app-icon";
+        img.onerror = () => {
+          img.src = "../assets/icons/not-found.svg";
+        };
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.borderRadius = "16px";
@@ -311,7 +328,10 @@
           openBtn.style.padding = "12px 24px";
           openBtn.style.flex = "1";
           openBtn.onclick = () =>
-            window.api.openApp(app.paths[0], app.steam === "si");
+            window.api.openApp(
+              app.executablePath || app.paths[0],
+              app.steam === "si",
+            );
 
           // Botón Ubicación
           const locBtn = document.createElement("button");
@@ -321,7 +341,9 @@
           locBtn.style.flex = "1";
           locBtn.onclick = () => {
             playSound("others.mp3");
-            window.api.openAppLocation(app.installPath || app.paths[0]);
+            window.api.openAppLocation(
+              app.installPath || app.executablePath || app.paths[0],
+            );
             showToast("Abriendo ubicación...");
           };
 
@@ -332,15 +354,29 @@
             shareBtn.className = "md-btn md-btn-tonal";
             shareBtn.style.padding = "12px 16px";
             shareBtn.innerHTML =
-              '<img src="../assets/icons/share.svg" alt="Share" style="width: 20px; height: 20px;">';
+              '<img src="../assets/icons/share.svg" alt="Share" style="width: 20px; height: 20px; filter: invert(1);">';
             shareBtn.style.marginLeft = "auto";
             shareBtn.onclick = () => {
               playSound("others.mp3");
               navigator.clipboard.writeText(
-                `Juega conmigo a https://stormgamesstudios.vercel.app/juegos/juegos-url/${app.id}/play`,
+                `Juega conmigo a https://stormstore.vercel.app/app/${app.id}/run`,
               );
               showToast("Enlace copiado al portapapeles");
             };
+          }
+
+          // Botón Web
+          const webBtn = document.createElement("button");
+          webBtn.className = "md-btn md-btn-tonal";
+          webBtn.style.padding = "12px 16px";
+          webBtn.innerHTML =
+            '<img src="../assets/icons/web.svg" alt="Web" style="width: 20px; height: 20px; filter: invert(1);">';
+          webBtn.onclick = () => {
+            playSound("others.mp3");
+            window.open(`https://stormstore.vercel.app/app/${app.id}`);
+          };
+          if (app["share-compatibility"] !== "si") {
+            webBtn.style.marginLeft = "auto";
           }
 
           // Botón Desinstalar
@@ -370,6 +406,7 @@
             if (!isUninstalling) {
               actionsDiv.append(openBtn, locBtn, uninstallBtn);
               if (shareBtn) actionsDiv.append(shareBtn);
+              actionsDiv.append(webBtn);
             } else {
               actionsDiv.append(uninstallBtn);
             }
@@ -431,16 +468,17 @@
           installBtn.onclick = async () => {
             isInstalling = true;
             playSound("others.mp3");
-            showToast("Iniciando instalación...");
+            showToast(`Iniciando descarga e instalación de ${app.name}…`);
             renderDetails(app);
             try {
               await window.api.installApp(app);
               playSound("finish.mp3");
             } catch (e) {
-              console.error(e);
+              if (!e.message.includes("INSTALL_CANCELLED")) console.error(e);
             }
             isInstalling = false;
-            loadApp();
+            renderDetails(app); // Forzar re-renderizado inmediato del botón
+            await loadApp();
           };
           actionsDiv.appendChild(installBtn);
 
@@ -449,17 +487,31 @@
             shareBtn.className = "md-btn md-btn-tonal";
             shareBtn.style.padding = "12px 16px";
             shareBtn.innerHTML =
-              '<img src="../assets/icons/share.svg" alt="Share" style="width: 20px; height: 20px;">';
+              '<img src="../assets/icons/share.svg" alt="Share" style="width: 20px; height: 20px; filter: invert(1);">';
             shareBtn.style.marginLeft = "auto";
             shareBtn.onclick = () => {
               playSound("others.mp3");
               navigator.clipboard.writeText(
-                `Juega conmigo a https://stormgamesstudios.vercel.app/juegos/juegos-url/${app.id}/play`,
+                `Juega conmigo a https://stormstore.vercel.app/app/${app.id}/run`,
               );
               showToast("Enlace copiado al portapapeles");
             };
             actionsDiv.appendChild(shareBtn);
           }
+
+          const webBtn = document.createElement("button");
+          webBtn.className = "md-btn md-btn-tonal";
+          webBtn.style.padding = "12px 16px";
+          webBtn.innerHTML =
+            '<img src="../assets/icons/web.svg" alt="Web" style="width: 20px; height: 20px; filter: invert(1);">';
+          webBtn.onclick = () => {
+            playSound("others.mp3");
+            window.open(`https://stormstore.vercel.app/app/${app.id}`);
+          };
+          if (app["share-compatibility"] !== "si") {
+            webBtn.style.marginLeft = "auto";
+          }
+          actionsDiv.appendChild(webBtn);
         }
 
         infoDiv.append(desc);
@@ -493,6 +545,15 @@
           return p;
         };
 
+        if (app.verified === "true") {
+          requirementsContainer.appendChild(
+            createRequirement(
+              "Esta aplicación está verificada por StormGamesStudios.",
+              "../assets/icons/verified.svg",
+            ),
+          );
+        }
+
         if (app.steam === "si") {
           requirementsContainer.appendChild(
             createRequirement(
@@ -511,6 +572,15 @@
           );
         }
 
+        if (app["virus-alert"] === "alert") {
+          requirementsContainer.appendChild(
+            createRequirement(
+              "Esta aplicación ha sido marcada como peligrosa.",
+              "../assets/icons/virus.svg",
+            ),
+          );
+        }
+
         if (requirementsContainer.hasChildNodes()) {
           infoDiv.appendChild(requirementsContainer);
         }
@@ -522,7 +592,7 @@
         trailerContainer.style.marginTop = "20px";
         trailerContainer.style.width = "100%";
 
-        const trailerUrl = `https://cdn.jsdelivr.net/gh/acierto-incomodo/StormStore@main/application/assets/media/trailers/${app.id}.mp4`;
+        const trailerUrl = `https://acierto-incomodo.github.io/StormStore/assets/trailers/${app.id}.mp4`;
 
         if (!navigator.onLine) {
           trailerContainer.style.height = "200px";

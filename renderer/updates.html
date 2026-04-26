@@ -65,6 +65,13 @@
               style="width: 20px; height: 20px"
             />
           </button>
+          <button class="control-btn" id="open-settings-header" title="Ajustes">
+            <img
+              src="../assets/icons/settings.svg"
+              alt="Ajustes"
+              style="width: 20px; height: 20px"
+            />
+          </button>
           <button class="control-btn" id="min-btn">─</button>
           <button class="control-btn" id="max-btn">◻</button>
           <button class="control-btn close" id="close-btn">✕</button>
@@ -170,7 +177,11 @@
         state: "Sistema",
       });
 
-      function showToast(message) {
+      function playSound(soundFile) {
+        new Audio(`../assets/media/sounds/${soundFile}`).play();
+      }
+
+      function showToast(message, duration = 3000) {
         let toast = document.getElementById("toast-notification");
         if (!toast) {
           toast = document.createElement("div");
@@ -178,14 +189,17 @@
           toast.className = "toast-notification";
           document.body.appendChild(toast);
         }
+        playSound("toast.mp3");
         toast.textContent = message;
         toast.classList.add("show");
         setTimeout(() => {
           toast.classList.remove("show");
-        }, 3000);
+        }, duration);
       }
 
-      window.api.onShowToast((_event, message) => showToast(message));
+      window.api.onShowToast((_event, message, duration) =>
+        showToast(message, duration),
+      );
 
       // Esperar a que el DOM esté completamente cargado
       document.addEventListener("DOMContentLoaded", function () {
@@ -238,6 +252,8 @@
           });
         }
 
+        document.getElementById("open-updates")?.classList.add("active");
+
         // Cargar versión actual
         loadCurrentVersion();
 
@@ -283,6 +299,11 @@
         document.getElementById("open-info")?.addEventListener("click", () => {
           window.location.href = "info.html";
         });
+        document
+          .getElementById("open-settings-header")
+          ?.addEventListener("click", () => {
+            window.location.href = "settings.html";
+          });
 
         // Buscar actualizaciones
         document
@@ -334,11 +355,13 @@
         window.api.onUpdateAvailable((_, info) => {
           resetCheckUI();
           showUpdateAvailable(info);
+          showToast("Actualización disponible!");
         });
 
         window.api.onUpdateNotAvailable(() => {
           showNoUpdate();
           resetCheckUI();
+          showToast("No hay actualizaciones disponibles.");
         });
 
         window.api.onDownloadProgress((_, progressObj) => {
@@ -358,6 +381,8 @@
           document.getElementById("download-progress").style.display = "none";
           document.getElementById("update-info-section").style.display = "none";
 
+          showToast("Actualización descargada, se instalará pronto.");
+
           const readySection = document.getElementById("update-ready-section");
           readySection.style.display = "block";
           readySection.querySelector("h2").textContent =
@@ -374,6 +399,7 @@
         window.api.onUpdateError((_, message) => {
           resetCheckUI();
           showError(`Error: ${message}`);
+          showToast(`Error de actualización: ${message}`);
         });
 
         // Controles de ventana

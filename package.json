@@ -1,12 +1,13 @@
 {
   "name": "stormstore",
-  "version": "1.2.23",
+  "version": "1.5.2",
   "description": "Tienda de aplicaciones de StormGamesStudios",
   "author": "StormGamesStudios",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "start:stormvortex": "electron . --StormVortex",
+    "start:2": "set NODE_NO_WARNINGS=1 && electron .",
     "build": "electron-builder",
     "update-check": "electron-updater"
   },
@@ -41,29 +42,39 @@
       "include": "build/v2-installer.nsh",
       "differentialPackage": true
     },
+    "extraResources": [
+      "assets/extraFiles/7zr.exe"
+    ],
     "files": [
       "package.json",
       "main.js",
       "preload.js",
       "apps.json",
-      "UPDATE.md",
-      "Changes.txt",
       "renderer/**/*",
       "assets/**/*",
+      "settings.json",
       "!assets/extraFiles/**/*",
       "!assets/media/trailers/**/*",
       "!assets/apps-4096x4096/**/*",
       "!assets/apps-new-quality/**/*",
       "!assets/apps-old/**/*",
       "!assets/apps-original/**/*",
-      "!assets/apps-to-make/**/*"
-    ],
-    "extraResources": [
-      "assets/extraFiles/**"
+      "!assets/apps-to-make/**/*",
+      "!setup/**/*",
+      "!**/*.ps1",
+      "!**/*.bat",
+      "!**/*.txt",
+      "!**/*.md",
+      "!**/*.sh",
+      "!package-*.json",
+      "!hacer",
+      "!apps.json.*",
+      "!assets/apps/**/*",
+      "!assets/apps-size/**/*"
     ]
   },
   "devDependencies": {
-    "electron": "^40.6.0",
+    "electron": "^41.3.0",
     "electron-builder": "^26.8.1"
   },
   "dependencies": {
