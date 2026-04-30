@@ -127,7 +127,9 @@ function createTray() {
       label: "Descargas",
       click: () => {
         mainWindow.show();
-        mainWindow.loadFile(path.join(__dirname, "renderer/program-updates.html"));
+        mainWindow.loadFile(
+          path.join(__dirname, "renderer/program-updates.html"),
+        );
         mainWindow.focus();
       },
     },

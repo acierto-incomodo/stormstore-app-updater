@@ -271,10 +271,18 @@
             />
           </button>
           <button class="control-btn" id="open-big-picture" title="StormVortex">
-            <img src="../assets/icons/stormvortex.svg" alt="StormVortex" style="width: 20px; height: 20px" />
+            <img
+              src="../assets/icons/stormvortex.svg"
+              alt="StormVortex"
+              style="width: 20px; height: 20px"
+            />
           </button>
           <button class="control-btn" id="open-settings-header" title="Ajustes">
-            <img src="../assets/icons/settings.svg" alt="Ajustes" style="width: 20px; height: 20px" />
+            <img
+              src="../assets/icons/settings.svg"
+              alt="Ajustes"
+              style="width: 20px; height: 20px"
+            />
           </button>
           <button class="control-btn" id="min-btn">─</button>
           <button class="control-btn" id="max-btn">◻</button>
@@ -302,7 +310,9 @@
         addDownload(id, filename, isUpdate);
         // Activar animación en el botón del header
         checkActiveDownloads();
-        document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.add("downloading-active"));
+        document
+          .querySelectorAll("#open-downloads")
+          .forEach((btn) => btn.classList.add("downloading-active"));
       });
 
       window.api.onDownloadProgress((_event, id, progress) => {
@@ -312,7 +322,9 @@
       window.api.onDownloadComplete((_event, id) => {
         updateDownloadStatus(id, "completed");
         // Desactivar animación si no hay más descargas
-        document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.remove("downloading-active"));
+        document
+          .querySelectorAll("#open-downloads")
+          .forEach((btn) => btn.classList.remove("downloading-active"));
         checkActiveDownloads();
       });
 
@@ -346,19 +358,27 @@
       async function checkActiveDownloads() {
         const all = await window.api.getAllDownloads();
         // Consideramos "activo" si está en cualquier fase que no sea completado, error o cancelado
-        const isAnyBusy = all.some(d => 
-          d.status === 'downloading' || 
-          d.status === 'merging' || 
-          d.status === 'extracting' || 
-          d.status === 'verifying'
+        const isAnyBusy = all.some(
+          (d) =>
+            d.status === "downloading" ||
+            d.status === "merging" ||
+            d.status === "extracting" ||
+            d.status === "verifying",
         );
 
         // Bloquear/Desbloquear navegación
         toggleNavigationLock(isAnyBusy);
 
-        const isAnyDownloading = all.some(d => d.status === 'downloading' || d.status === 'merging' || d.status === 'extracting');
+        const isAnyDownloading = all.some(
+          (d) =>
+            d.status === "downloading" ||
+            d.status === "merging" ||
+            d.status === "extracting",
+        );
         if (!isAnyDownloading) {
-          document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.remove("downloading-active"));
+          document
+            .querySelectorAll("#open-downloads")
+            .forEach((btn) => btn.classList.remove("downloading-active"));
         }
       }
 
@@ -370,10 +390,10 @@
           document.getElementById("open-settings-header"),
           document.getElementById("min-btn"),
           document.getElementById("max-btn"),
-          document.getElementById("close-btn")
+          document.getElementById("close-btn"),
         ];
 
-        elementsToHide.forEach(el => {
+        elementsToHide.forEach((el) => {
           if (el) {
             el.style.opacity = lock ? "0" : "1";
             el.style.pointerEvents = lock ? "none" : "auto";
@@ -386,10 +406,12 @@
       window.addEventListener("DOMContentLoaded", async () => {
         const activeDownloads = await window.api.getAllDownloads();
         if (activeDownloads && activeDownloads.length > 0) {
-          document.querySelectorAll("#open-downloads").forEach(btn => btn.classList.add("downloading-active"));
+          document
+            .querySelectorAll("#open-downloads")
+            .forEach((btn) => btn.classList.add("downloading-active"));
           activeDownloads.forEach((d) => {
             addDownload(d.id, d.config.name, d.isUpdate, d.config.extractPath);
-            
+
             updateDownloadStatus(d.id, d.status);
             updateDownloadProgress(d.id, {
               percent: d.progress,
@@ -578,23 +600,29 @@
         ?.addEventListener("click", () => {
           window.location.href = "licencias.html";
         });
-      document.getElementById("open-big-picture")?.addEventListener("click", () => {
-        window.api.openBigPicture();
-      });
+      document
+        .getElementById("open-big-picture")
+        ?.addEventListener("click", () => {
+          window.api.openBigPicture();
+        });
       document.getElementById("open-info")?.addEventListener("click", () => {
         window.location.href = "info.html";
       });
-      document.getElementById("open-settings-header")?.addEventListener("click", () => {
-        window.location.href = "settings.html";
-      });
+      document
+        .getElementById("open-settings-header")
+        ?.addEventListener("click", () => {
+          window.location.href = "settings.html";
+        });
 
       // Footer links (Social)
-      document.querySelectorAll(".sidebar-footer button[data-link]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const url = btn.getAttribute("data-link");
-          window.open(url);
+      document
+        .querySelectorAll(".sidebar-footer button[data-link]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const url = btn.getAttribute("data-link");
+            window.open(url);
+          });
         });
-      });
 
       // Controles de ventana
       document

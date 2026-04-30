@@ -75,8 +75,9 @@ async function load(force = false) {
     // Sincronizar descargas activas desde el backend
     const activeDownloads = await window.api.getAllDownloads();
     installingApps.clear();
-    activeDownloads.forEach(d => {
-      if (d.status !== 'completed' && d.status !== 'error') installingApps.add(d.id);
+    activeDownloads.forEach((d) => {
+      if (d.status !== "completed" && d.status !== "error")
+        installingApps.add(d.id);
     });
 
     const [newApps] = await Promise.all([

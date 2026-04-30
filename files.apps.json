@@ -1,32 +1,5 @@
 [
   {
-    "id": "game-pack-001",
-    "name": "Juego Completo Pack 1",
-    "files": [
-      "game-pack-001.zip.001",
-      "game-pack-001.zip.002",
-      "game-pack-001.zip.003"
-    ],
-    "merge": true,
-    "mergedName": "game-pack-001.zip",
-    "extractPath": "C:\\Games\\GamePack1",
-    "executablePath": "C:\\Games\\GamePack1\\game.exe",
-    "checksumFile": "game-pack-001.txt",
-    "checksumUrl": "https://github.com/acierto-incomodo/UltraKillGame/releases/latest/download/version.txt",
-    "downloadUrl": "https://github.com/acierto-incomodo/UltraKillGame/releases/latest/download/"
-  },
-  {
-    "id": "app-single",
-    "name": "Aplicación Simple",
-    "files": ["app-simple.zip"],
-    "merge": false,
-    "extractPath": "C:\\Apps\\SimpleApp",
-    "executablePath": "C:\\Apps\\SimpleApp\\app.exe",
-    "checksumFile": "app-simple.txt",
-    "checksumUrl": "https://example.com/checksums/app-simple.txt",
-    "downloadUrl": "https://example.com/downloads/"
-  },
-  {
     "id": "ultrakill",
     "name": "ULTRAKILL",
     "files": ["Build.zip.001", "Build.zip.002"],
@@ -38,5 +11,23 @@
     "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/UltraKillGame/game",
     "checksumUrl": "https://github.com/acierto-incomodo/UltraKillGame/releases/latest/download/version.txt",
     "downloadUrl": "https://github.com/acierto-incomodo/UltraKillGame/releases/latest/download/"
+  },
+  {
+    "id": "gmod",
+    "name": "Garry's Mod",
+    "files": [
+      "Build.zip.001",
+      "Build.zip.002",
+      "Build.zip.003",
+      "Build.zip.004"
+    ],
+    "merge": true,
+    "mergedName": "Build.zip",
+    "extractPath": "%appdata%/StormGamesStudios/NewGameDir/GarrysMod/game/Build",
+    "executablePath": "%appdata%/StormGamesStudios/NewGameDir/GarrysMod/game/Build/Build/gmod.exe",
+    "checksumFile": "version.txt",
+    "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/GarrysMod/game",
+    "checksumUrl": "https://github.com/acierto-incomodo/garrys-mod-game/releases/latest/download/version.txt",
+    "downloadUrl": "https://github.com/acierto-incomodo/garrys-mod-game/releases/latest/download/"
   }
 ]

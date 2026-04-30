@@ -190,9 +190,11 @@
       document.getElementById("open-updates")?.addEventListener("click", () => {
         window.location.href = "updates.html";
       });
-      document.getElementById("open-downloads")?.addEventListener("click", () => {
-        window.location.href = "program-updates.html";
-      });
+      document
+        .getElementById("open-downloads")
+        ?.addEventListener("click", () => {
+          window.location.href = "program-updates.html";
+        });
       document
         .getElementById("open-downloads")
         ?.addEventListener("click", () => {
@@ -238,7 +240,10 @@
       async function loadApp() {
         // Verificar si esta app se está instalando actualmente
         const activeDownloads = await window.api.getAllDownloads();
-        const isRunning = activeDownloads.some(d => d.id === appId && d.status !== 'completed' && d.status !== 'error');
+        const isRunning = activeDownloads.some(
+          (d) =>
+            d.id === appId && d.status !== "completed" && d.status !== "error",
+        );
         if (isRunning) isInstalling = true;
 
         const apps = await window.api.getApps();

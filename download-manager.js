@@ -292,7 +292,8 @@ class DownloadManager {
    */
   _downloadFile(download, url, filepath, filename, fileSize) {
     return new Promise((resolve, reject) => {
-      if (download.status === "cancelled") return reject(new Error("CANCELLED"));
+      if (download.status === "cancelled")
+        return reject(new Error("CANCELLED"));
 
       const protocol = url.startsWith("https") ? https : http;
 
