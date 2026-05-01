@@ -53,4 +53,4 @@ files:
       - '!apps.json.*'
       - '!assets/apps/**/*'
       - '!assets/apps-size/**/*'
-electronVersion: 41.3.0
+electronVersion: 41.4.0
