@@ -3,3 +3,4 @@
 /setup/build
 *.exe
 *.spec
+package-lock.json
