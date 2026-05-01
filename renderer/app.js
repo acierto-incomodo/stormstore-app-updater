@@ -89,6 +89,25 @@ async function load(force = false) {
       // que la descarga de imágenes en segundo plano dispare la animación de la UI constantemente.
       const stripIcons = (apps) => apps.map(({ icon, ...rest }) => ({ ...rest }));
       const structuralChange = JSON.stringify(stripIcons(mergedApps)) !== JSON.stringify(stripIcons(allApps));
+      const hasChanged = force || structuralChange;
+
+      if (hasChanged) {
+        allApps = mergedApps;
+        renderCategories();
+        if (searchInput && searchInput.value !== currentSearch)
+          searchInput.value = currentSearch;
+        renderApps(currentCategory);
+      } else {
+        // Actualizamos los datos internamente pero sin re-renderizar la UI (evita el flash/animación)
+        allApps = mergedApps;
+      }
+  } catch (err) {
+    console.error("Error loading apps:", err);
+    showToast("Error cargando aplicaciones. Intenta recargar.");
+    // Forzar renderizado vacío para quitar skeletons
+    allApps = [];
+    renderCategories();
+    renderApps(currentCategory);
   } finally {
     if (force && refreshBtn) {
       refreshBtn.disabled = false;

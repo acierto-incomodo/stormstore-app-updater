@@ -144,25 +144,9 @@
       </div>
 
       <div class="updates-container">
-        <div class="update-section">
-          <h2>Selecciona un programa</h2>
-          <select id="program-select"></select>
-          <div class="button-group" style="margin-top: 16px;">
-            <button id="install-btn" class="md-btn md-btn-filled">
-              Descargar e instalar
-            </button>
-            <button id="refresh-programs" class="md-btn md-btn-tonal">
-              Refrescar catálogo
-            </button>
-          </div>
-          <p id="selection-hint" style="margin-top: 12px; color: var(--md-sys-color-on-surface-variant);">
-            La página usa primero la definición de <code>files.apps.json</code>. Si no existe, revertirá a <code>apps.json</code>.
-          </p>
-        </div>
-
         <div class="update-section progress-card">
-          <h2>Progreso</h2>
-          <p id="status-text">Elige un programa y comienza la instalación.</p>
+          <h2>Descargando...</h2>
+          <p id="status-text">Iniciando descarga...</p>
           <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
           </div>
@@ -181,11 +165,6 @@
               <strong id="speed-text">0 B/s</strong>
             </div>
           </div>
-        </div>
-
-        <div class="update-section">
-          <h2>Detalles del programa</h2>
-          <div class="details-grid" id="details-list"></div>
         </div>
       </div>
 

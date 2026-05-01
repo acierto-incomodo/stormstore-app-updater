@@ -22,7 +22,7 @@ const SteamPath = require("steam-path");
 const gameScanner = require("@equal-games/game-scanner");
 const DiscordRPC = require("discord-rpc");
 
-let appsData = require("./apps.json");
+let appsData;
 let filesAppsData = [];
 let isOffline = true; // Por defecto asumimos offline hasta que la sincronización diga lo contrario
 let FILES_APPS_JSON_CACHE;
@@ -42,6 +42,15 @@ const SETTINGS_PATH = path.join(
   "StormStore",
   "settings.json",
 );
+
+// Cargar datos locales iniciales
+try {
+  const appsPath = path.join(app.getAppPath(), "apps.json");
+  appsData = JSON.parse(fs.readFileSync(appsPath, "utf8"));
+} catch (err) {
+  console.error("Error loading apps.json:", err);
+  appsData = [];
+}
 
 const REMOTE_APPS_URL =
   "https://acierto-incomodo.github.io/StormStore/assets/apps.json";
@@ -748,7 +757,7 @@ async function loadFilesAppsData() {
   }
 
   try {
-    const localPath = path.join(__dirname, "files.apps.json");
+    const localPath = path.join(app.getAppPath(), "files.apps.json");
     const localData = JSON.parse(fs.readFileSync(localPath, "utf8"));
     filesAppsData = Array.isArray(localData) ? localData : [];
   } catch (err) {
