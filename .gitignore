@@ -1,6 +1,0 @@
-/node_modules
-/setup/build
-/dist/win-unpacked
-*.exe
-*.blockmap
-package-lock.json

@@ -1,1 +1,0 @@
-powershell -ExecutionPolicy Bypass -File .\make-app.ps1
