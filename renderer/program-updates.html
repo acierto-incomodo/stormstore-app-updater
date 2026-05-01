@@ -334,10 +334,8 @@
       });
 
       window.api.onDownloadCancelled((_event, id) => {
-        const item = document.getElementById(`download-${id}`);
-        if (item) item.remove();
-        downloads.delete(id);
-        checkActiveDownloads();
+        window.location.href = "index.html";
+        window.api.showToast("Se ha cancelado la descarga", 3000);
       });
 
       window.api.onMergingStart((_event, id) => {
@@ -355,8 +353,8 @@
         checkActiveDownloads();
       });
 
-      async function checkActiveDownloads() {
-        const all = await window.api.getAllDownloads();
+      function checkActiveDownloads() {
+        const all = Array.from(downloads.values());
         // Consideramos "activo" si está en cualquier fase que no sea completado, error o cancelado
         const isAnyBusy = all.some(
           (d) =>
@@ -395,9 +393,10 @@
 
         elementsToHide.forEach((el) => {
           if (el) {
-            el.style.opacity = lock ? "0" : "1";
-            el.style.pointerEvents = lock ? "none" : "auto";
-            el.style.transition = "opacity 0.3s ease";
+            el.style.opacity = lock ? "0.5" : "1";
+            if (el.tagName === "BUTTON") {
+              el.disabled = lock;
+            }
           }
         });
       }
@@ -546,12 +545,32 @@
         const item = document.getElementById(`download-${id}`);
         if (!item) return;
 
-        // Bloquear botón cancelar si ya no estamos en fase de descarga
+        // Actualizar botón según status
         const cancelBtn = document.getElementById(`cancel-${id}`);
         if (cancelBtn) {
-          if (status === "completed" || status === "error") {
-            cancelBtn.style.display = "none";
-          } else if (status !== "downloading") {
+          if (status === "completed") {
+            cancelBtn.textContent = "Abrir carpeta";
+            cancelBtn.className = "md-btn";
+            cancelBtn.onclick = () => window.api.openFolder(downloads.get(id).extractPath);
+            cancelBtn.disabled = false;
+            cancelBtn.style.opacity = "1";
+            cancelBtn.style.display = "block";
+          } else if (status === "error" || status === "cancelled") {
+            cancelBtn.textContent = "Reintentar";
+            cancelBtn.className = "md-btn";
+            cancelBtn.onclick = () => window.api.retryDownload(id);
+            cancelBtn.disabled = false;
+            cancelBtn.style.opacity = "1";
+            cancelBtn.style.display = "block";
+          } else if (status === "downloading") {
+            cancelBtn.textContent = "Cancelar";
+            cancelBtn.className = "md-btn danger";
+            cancelBtn.onclick = () => window.api.cancelDownload(id);
+            cancelBtn.disabled = false;
+            cancelBtn.style.opacity = "1";
+            cancelBtn.style.display = "block";
+          } else {
+            // merging, extracting, verifying
             cancelBtn.disabled = true;
             cancelBtn.style.opacity = "0.5";
             cancelBtn.textContent = "Procesando...";
@@ -561,13 +580,14 @@
         const statusEl = item.querySelector(".download-status");
         if (statusEl) {
           statusEl.className = `download-status status-${status}`;
-          const statusTexts = {
+        const statusTexts = {
             downloading: "Descargando",
             merging: "Combinando archivos",
             extracting: "Descomprimiendo",
             verifying: "Verificando",
             completed: "Completado",
             error: "Error",
+            cancelled: "Cancelado",
           };
           statusEl.textContent = statusTexts[status] || status;
         }

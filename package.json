@@ -51,7 +51,6 @@
       "preload.js",
       "download-manager.js",
       "apps.json",
-      "files.apps.json",
       "renderer/**/*",
       "assets/**/*",
       "settings.json",

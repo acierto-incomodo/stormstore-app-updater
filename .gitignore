@@ -3,3 +3,4 @@
 /dist/win-unpacked
 *.exe
 *.blockmap
+package-lock.json

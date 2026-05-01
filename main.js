@@ -45,6 +45,8 @@ const SETTINGS_PATH = path.join(
 
 const REMOTE_APPS_URL =
   "https://acierto-incomodo.github.io/StormStore/assets/apps.json";
+const REMOTE_FILES_APPS_URL =
+  "https://acierto-incomodo.github.io/StormStore/assets/files.apps.json";
 const REMOTE_ICONS_BASE =
   "https://acierto-incomodo.github.io/StormStore/assets/apps-size/";
 
@@ -704,6 +706,28 @@ async function syncRemoteData() {
     isOffline = false; // Sincronización exitosa = Estamos online
     fs.writeFileSync(APPS_JSON_CACHE, JSON.stringify(appsData, null, 2));
 
+    // Descargar files.apps.json
+    const filesData = await new Promise((resolve, reject) => {
+      const req = https.get(REMOTE_FILES_APPS_URL, (res) => {
+        if (res.statusCode !== 200)
+          return reject(new Error("Error fetching files.apps.json"));
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+      req.on("error", reject);
+      req.end();
+    });
+
+    filesAppsData = filesData;
+    fs.writeFileSync(FILES_APPS_JSON_CACHE, JSON.stringify(filesAppsData, null, 2));
+
     // Notificar al frontend que los datos han sido actualizados
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(
@@ -760,6 +784,9 @@ async function syncRemoteData() {
     isOffline = true; // Fallo en la red = Modo offline
     if (fs.existsSync(APPS_JSON_CACHE)) {
       appsData = JSON.parse(fs.readFileSync(APPS_JSON_CACHE, "utf8"));
+    }
+    if (fs.existsSync(FILES_APPS_JSON_CACHE)) {
+      filesAppsData = JSON.parse(fs.readFileSync(FILES_APPS_JSON_CACHE, "utf8"));
     }
   }
 }
@@ -1412,6 +1439,17 @@ ipcMain.handle("get-all-downloads", () => {
   return [];
 });
 
+ipcMain.handle("open-folder", async (_, path) => {
+  shell.openPath(path);
+});
+
+ipcMain.handle("retry-download", async (_, id) => {
+  const config = filesAppsData.find(app => app.id === id);
+  if (config && downloadManager) {
+    downloadManager.startDownload(id, config, tempDir);
+  }
+});
+
 // =====================================
 // MANEJO DE ACTUALIZACIONES
 // =====================================
@@ -1474,6 +1512,10 @@ ipcMain.handle("sync-remote-data", async () => {
 
 ipcMain.handle("get-settings", () => loadSettings());
 ipcMain.on("save-settings", (event, settings) => saveSettings(settings));
+
+ipcMain.on("show-toast", (event, message, duration) => {
+  mainWindow?.webContents.send("show-toast", message, duration);
+});
 
 ipcMain.handle("clear-cache", async () => {
   try {
@@ -1558,6 +1600,7 @@ if (!gotLock) {
     );
     ICONS_CACHE_DIR = path.join(CACHE_DIR, "icons");
     APPS_JSON_CACHE = path.join(CACHE_DIR, "apps.json");
+    FILES_APPS_JSON_CACHE = path.join(CACHE_DIR, "files.apps.json");
 
     if (fs.existsSync(APPS_JSON_CACHE)) {
       try {

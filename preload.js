@@ -62,9 +62,13 @@ contextBridge.exposeInMainWorld("api", {
   onDownloadComplete: (callback) =>
     ipcRenderer.on("download-complete", callback),
   onDownloadError: (callback) => ipcRenderer.on("download-error", callback),
+  onDownloadCancelled: (callback) => ipcRenderer.on("download-cancelled", callback),
   onMergingStart: (callback) => ipcRenderer.on("merging-start", callback),
   onExtractingStart: (callback) => ipcRenderer.on("extracting-start", callback),
   onVerifyingStart: (callback) => ipcRenderer.on("verifying-start", callback),
   onWindowUnmaximized: (callback) =>
     ipcRenderer.on("window-unmaximized", callback),
+  openFolder: (path) => ipcRenderer.invoke("open-folder", path),
+  retryDownload: (id) => ipcRenderer.invoke("retry-download", id),
+  showToast: (message, duration) => ipcRenderer.send("show-toast", message, duration),
 });
