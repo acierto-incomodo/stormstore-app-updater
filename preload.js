@@ -2,7 +2,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
   getApps: () => ipcRenderer.invoke("get-apps"),
+  getFilesApps: () => ipcRenderer.invoke("get-files-apps"),
   installApp: (app) => ipcRenderer.invoke("install-app", app),
+  installProgramById: (id) => ipcRenderer.invoke("install-program-by-id", id),
   getSteamGames: () => ipcRenderer.invoke("get-steam-games"),
   getEpicGames: () => ipcRenderer.invoke("get-epic-games"),
   openApp: (path, requiresSteam) =>
@@ -24,6 +26,9 @@ contextBridge.exposeInMainWorld("api", {
   onUpdateDownloaded: (callback) =>
     ipcRenderer.on("update-downloaded", callback),
   onUpdateError: (callback) => ipcRenderer.on("update-error", callback),
+  onInstallProgress: (callback) => ipcRenderer.on("install-progress", callback),
+  onInstallComplete: (callback) => ipcRenderer.on("install-complete", callback),
+  onInstallError: (callback) => ipcRenderer.on("install-error", callback),
   onShowToast: (callback) => ipcRenderer.on("show-toast", callback),
   openBigPicture: () => ipcRenderer.invoke("open-big-picture"),
   openMainView: () => ipcRenderer.invoke("open-main-view"),

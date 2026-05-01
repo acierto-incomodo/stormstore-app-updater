@@ -72,27 +72,23 @@ async function load(force = false) {
       await window.api.syncRemoteData();
     }
 
-    const [newApps] = await Promise.all([
-      window.api.getApps(),
-      force ? new Promise((r) => setTimeout(r, 1000)) : Promise.resolve(),
-    ]);
+      const syncPromise = force ? new Promise((r) => setTimeout(r, 1000)) : Promise.resolve();
+      const [newApps, filesApps] = await Promise.all([
+        window.api.getApps(),
+        window.api.getFilesApps(),
+        syncPromise,
+      ]);
 
-    // Comprobación inteligente de cambios: Ignoramos el campo 'icon' para evitar
-    // que la descarga de imágenes en segundo plano dispare la animación de la UI constantemente.
-    const stripIcons = (apps) => apps.map(({ icon, ...rest }) => ({ ...rest }));
-    const structuralChange = JSON.stringify(stripIcons(newApps)) !== JSON.stringify(stripIcons(allApps));
-    const hasChanged = force || structuralChange;
+      const fileAppsById = new Map((filesApps || []).map((fileApp) => [fileApp.id, fileApp]));
+      const mergedApps = newApps.map((app) => ({
+        ...app,
+        fileApp: fileAppsById.get(app.id),
+      }));
 
-    if (hasChanged) {
-      allApps = newApps;
-      renderCategories();
-      if (searchInput && searchInput.value !== currentSearch)
-        searchInput.value = currentSearch;
-      renderApps(currentCategory);
-    } else {
-      // Actualizamos los datos internamente pero sin re-renderizar la UI (evita el flash/animación)
-      allApps = newApps;
-    }
+      // Comprobación inteligente de cambios: Ignoramos el campo 'icon' para evitar
+      // que la descarga de imágenes en segundo plano dispare la animación de la UI constantemente.
+      const stripIcons = (apps) => apps.map(({ icon, ...rest }) => ({ ...rest }));
+      const structuralChange = JSON.stringify(stripIcons(mergedApps)) !== JSON.stringify(stripIcons(allApps));
   } finally {
     if (force && refreshBtn) {
       refreshBtn.disabled = false;
@@ -206,7 +202,7 @@ function createAppCard(app, index) {
     openBtn.textContent = "Abrir";
     openBtn.className = "md-btn md-btn-filled";
     openBtn.style.flex = "1";
-    openBtn.onclick = () => window.api.openApp(app.executablePath || app.paths[0], app.steam === "si");
+    openBtn.onclick = () => window.api.openApp(app.fileApp?.executablePath || app.executablePath || app.paths[0], app.steam === "si");
     if (isUninstalling) openBtn.style.display = "none";
     topRow.appendChild(openBtn);
 
@@ -273,7 +269,7 @@ function createAppCard(app, index) {
     locBtn.style.width = "100%";
     locBtn.onclick = () => {
       playSound("others.mp3");
-      window.api.openAppLocation(app.installPath || app.executablePath || app.paths[0]);
+      window.api.openAppLocation(app.fileApp?.executablePath || app.installPath || app.executablePath || app.paths[0]);
       showToast("Abriendo ubicación...");
     };
     if (isUninstalling) locBtn.style.display = "none";
@@ -295,6 +291,12 @@ function createAppCard(app, index) {
     } else {
       installBtn.textContent = "Instalar";
       installBtn.onclick = async () => {
+        if (app.fileApp) {
+          showToast(`Abriendo gestor de descargas para ${app.name}…`);
+          window.location.href = `program-updates.html?id=${encodeURIComponent(app.id)}`;
+          return;
+        }
+
         installingApps.add(app.id);
         playSound("others.mp3");
         showToast(`Iniciando descarga e instalación de ${app.name}…`);
