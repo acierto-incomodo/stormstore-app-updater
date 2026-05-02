@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  const titleText = document.getElementById("title-text");
   const statusText = document.getElementById("status-text");
   const progressFill = document.getElementById("progress-fill");
   const downloadedText = document.getElementById("downloaded-text");
@@ -76,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const updateProgressUI = (progress) => {
     if (selectedId !== progress.id) return;
     const percent = progress.percent || 0;
+    window.api.setProgressBar(percent);
     progressFill.style.width = `${Math.min(100, Math.max(0, percent * 100))}%`;
     downloadedText.textContent = formatBytes(progress.downloaded || 0);
     totalText.textContent = totalSize > 0 ? formatBytes(totalSize) : (progress.total ? formatBytes(progress.total) : "--");
@@ -108,8 +110,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (isBatch) {
         const total = batchIds.length;
         const current = currentBatchIndex + 1;
+        if (titleText) titleText.textContent = "Descargando...";
         setStatus(`Actualizando ${current} de ${total}: ${fileApp ? fileApp.name : selectedId}`);
       } else {
+        if (titleText) titleText.textContent = "Descargando...";
         setStatus("Iniciando descarga...");
       }
       updateProgressUI({ downloaded: 0, total: totalSize, percent: 0, speed: 0 });
@@ -129,10 +133,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       await window.api.installProgramById(selectedId);
       setStatus("Instalación finalizada correctamente.");
+      if (titleText) titleText.textContent = "Completado";
       progressFill.style.width = "100%";
+      window.api.setProgressBar(-1);
     } catch (err) {
       console.error(err);
       setStatus(`Error: ${err.message || "Falló la instalación"}`);
+      window.api.setProgressBar(-1);
     } finally {
       isInstalling = false;
       disableNavigation(false);
@@ -146,12 +153,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.api.onInstallComplete((_event, info) => {
     if (info?.id !== selectedId) return;
     setStatus(info.message || "Instalación completada.");
+    if (titleText) titleText.textContent = "Completado";
     progressFill.style.width = "100%";
+    window.api.setProgressBar(-1);
   });
 
   window.api.onInstallError((_event, error) => {
     if (error?.id !== selectedId) return;
     setStatus(error.message || "Error durante la instalación.");
+    window.api.setProgressBar(-1);
     if (isBatch) {
       disableNavigation(false);
     }
@@ -169,14 +179,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         } else {
           setStatus('Todas las actualizaciones completadas.');
+          if (titleText) titleText.textContent = "Completado";
           disableNavigation(false);
+          window.api.setProgressBar(-1);
         }
       } else {
         setStatus("Instalación completada exitosamente");
+        if (titleText) titleText.textContent = "Completado";
         disableNavigation(false);
+        window.api.setProgressBar(-1);
       }
     } else {
       setStatus("Error en la instalación");
+      window.api.setProgressBar(-1);
       disableNavigation(false);
     }
   });

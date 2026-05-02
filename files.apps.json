@@ -478,5 +478,36 @@
     "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/ThePlanetCrafterGame/game",
     "checksumUrl": "https://github.com/acierto-incomodo/ThePlanetCrafterGame/releases/latest/download/version.txt",
     "downloadUrl": "https://github.com/acierto-incomodo/ThePlanetCrafterGame/releases/latest/download/"
+  },
+  {
+    "id": "rv-there-yet",
+    "name": "RV There Yet?",
+    "files": [
+      "Build.zip.001"
+    ],
+    "merge": true,
+    "mergedName": "Build.zip",
+    "extractPath": "%appdata%/StormGamesStudios/NewGameDir/RVThereYet/game/Build",
+    "executablePath": "%appdata%/StormGamesStudios/NewGameDir/RVThereYet/game/Build/Build/Ride.exe",
+    "checksumFile": "version.txt",
+    "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/RVThereYet/game",
+    "checksumUrl": "https://github.com/acierto-incomodo/rv-there-yet-game/releases/latest/download/version.txt",
+    "downloadUrl": "https://github.com/acierto-incomodo/rv-there-yet-game/releases/latest/download/"
+  },
+  {
+    "id": "subnautica",
+    "name": "Subnautica",
+    "files": [
+      "Build.zip.001",
+      "Build.zip.002"
+    ],
+    "merge": true,
+    "mergedName": "Build.zip",
+    "extractPath": "%appdata%/StormGamesStudios/NewGameDir/Subnautica/game/Build",
+    "executablePath": "%appdata%/StormGamesStudios/NewGameDir/Subnautica/game/Build/Build/Subnautica.exe",
+    "checksumFile": "version.txt",
+    "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/Subnautica/game",
+    "checksumUrl": "https://github.com/acierto-incomodo/subnautica-game/releases/latest/download/version.txt",
+    "downloadUrl": "https://github.com/acierto-incomodo/subnautica-game/releases/latest/download/"
   }
 ]

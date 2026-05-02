@@ -49,5 +49,6 @@ contextBridge.exposeInMainWorld("api", {
   sendVirusAlertResponse: (response) =>
     ipcRenderer.send("virus-alert-response", response),
   clearCache: () => ipcRenderer.invoke("clear-cache"),
+  setProgressBar: (value) => ipcRenderer.send("set-progress-bar", value),
   syncRemoteData: () => ipcRenderer.invoke("sync-remote-data"),
 });
