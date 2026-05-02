@@ -509,5 +509,28 @@
     "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/Subnautica/game",
     "checksumUrl": "https://github.com/acierto-incomodo/subnautica-game/releases/latest/download/version.txt",
     "downloadUrl": "https://github.com/acierto-incomodo/subnautica-game/releases/latest/download/"
+  },
+  {
+    "id": "space-engineers",
+    "name": "Space Engineers",
+    "files": [
+      "Build.zip.001",
+      "Build.zip.002",
+      "Build.zip.003",
+      "Build.zip.004",
+      "Build.zip.005",
+      "Build.zip.006",
+      "Build.zip.007",
+      "Build.zip.008",
+      "Build.zip.009"
+    ],
+    "merge": true,
+    "mergedName": "Build.zip",
+    "extractPath": "%appdata%/StormGamesStudios/NewGameDir/SpaceEngineers/game/Build",
+    "executablePath": "%appdata%/StormGamesStudios/NewGameDir/SpaceEngineers/game/Build/Build/Bin64/SpaceEngineers.exe",
+    "checksumFile": "version.txt",
+    "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/SpaceEngineers/game",
+    "checksumUrl": "https://github.com/acierto-incomodo/space-engineers-game/releases/latest/download/version.txt",
+    "downloadUrl": "https://github.com/acierto-incomodo/space-engineers-game/releases/latest/download/"
   }
 ]
