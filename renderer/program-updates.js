@@ -13,6 +13,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   let isInstalling = false;
   let totalSize = 0;
 
+  const isBatch = params.get('batch') === 'true';
+  const batchIds = isBatch ? params.get('ids').split(',') : [];
+  let currentBatchIndex = 0;
+
+  if (isBatch && batchIds.length > 0) {
+    selectedId = batchIds[0];
+    document.title = 'Actualizando programas - StormStore';
+  }
+
   const navButtons = [
     backBtn,
     document.getElementById("open-updates"),
@@ -74,24 +83,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     setStatus(progress.message || "Descargando...");
   };
 
+  const getFileSize = async (url) => {
+    const response = await fetch(url, { method: 'HEAD' });
+    const contentLength = response.headers.get('content-length');
+    return contentLength ? parseInt(contentLength, 10) : 0;
+  };
+
   const fetchProgramInfo = async () => {
     try {
       const files = await window.api.getFilesApps();
       const fileApp = files.find((f) => f.id === selectedId);
       if (fileApp && fileApp.files && Array.isArray(fileApp.files)) {
-        totalSize = fileApp.files.reduce((sum, fileName) => {
-          const match = fileName.match(/-(\\d+)([KMG]?)B?\\.zip/);
-          if (match) {
-            let bytes = parseInt(match[1]);
-            const unit = match[2];
-            if (unit === "K") bytes *= 1024;
-            else if (unit === "M") bytes *= 1024 * 1024;
-            else if (unit === "G") bytes *= 1024 * 1024 * 1024;
-            return sum + bytes;
+        totalSize = 0;
+        for (const file of fileApp.files) {
+          try {
+            const size = await getFileSize(fileApp.downloadUrl + file);
+            totalSize += size;
+          } catch (e) {
+            console.error('Error getting size for', file, e);
           }
-          return sum;
-        }, 0);
+        }
       }
+
+      if (isBatch) {
+        const total = batchIds.length;
+        const current = currentBatchIndex + 1;
+        setStatus(`Actualizando ${current} de ${total}: ${fileApp ? fileApp.name : selectedId}`);
+      } else {
+        setStatus("Iniciando descarga...");
+      }
+      updateProgressUI({ downloaded: 0, total: totalSize, percent: 0, speed: 0 });
     } catch (err) {
       console.error("Error fetching program info:", err);
     }
@@ -131,6 +152,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.api.onInstallError((_event, error) => {
     if (error?.id !== selectedId) return;
     setStatus(error.message || "Error durante la instalación.");
+    if (isBatch) {
+      disableNavigation(false);
+    }
+  });
+
+  window.api.onInstallComplete((_event, success, id) => {
+    if (id !== selectedId) return;
+    if (success) {
+      if (isBatch) {
+        currentBatchIndex++;
+        if (currentBatchIndex < batchIds.length) {
+          selectedId = batchIds[currentBatchIndex];
+          fetchProgramInfo().then(() => {
+            setTimeout(() => startInstall(), 1000);
+          });
+        } else {
+          setStatus('Todas las actualizaciones completadas.');
+          disableNavigation(false);
+        }
+      } else {
+        setStatus("Instalación completada exitosamente");
+        disableNavigation(false);
+      }
+    } else {
+      setStatus("Error en la instalación");
+      disableNavigation(false);
+    }
   });
 
   window.api.setDiscordActivity({

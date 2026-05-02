@@ -85,6 +85,31 @@ async function load(force = false) {
         fileApp: fileAppsById.get(app.id),
       }));
 
+      // Check for updates on installed fileApps
+      const checksumChecks = mergedApps
+        .filter(app => app.fileApp && app.installed)
+        .map(async app => {
+          try {
+            const result = await window.api.checkChecksum(app.id);
+            app.updateAvailable = result.needsUpdate;
+          } catch (e) {
+            console.error('Error checking checksum for', app.id, e);
+            app.updateAvailable = false;
+          }
+        });
+      await Promise.all(checksumChecks);
+
+      // Show/hide update all button
+      const hasUpdates = mergedApps.some(app => app.updateAvailable);
+      const updateAllBtn = document.getElementById('update-all-btn');
+      if (updateAllBtn) {
+        updateAllBtn.style.display = hasUpdates ? 'block' : 'none';
+        updateAllBtn.onclick = () => {
+          const ids = mergedApps.filter(app => app.updateAvailable).map(app => app.id).join(',');
+          window.location.href = `program-updates.html?batch=true&ids=${ids}`;
+        };
+      }
+
       // Comprobación inteligente de cambios: Ignoramos el campo 'icon' para evitar
       // que la descarga de imágenes en segundo plano dispare la animación de la UI constantemente.
       const stripIcons = (apps) => apps.map(({ icon, ...rest }) => ({ ...rest }));
@@ -218,10 +243,12 @@ function createAppCard(app, index) {
     topRow.style.width = "100%";
 
     const openBtn = document.createElement("button");
-    openBtn.textContent = "Abrir";
+    openBtn.textContent = app.updateAvailable ? "Actualizar" : "Abrir";
     openBtn.className = "md-btn md-btn-filled";
     openBtn.style.flex = "1";
-    openBtn.onclick = () => window.api.openApp(app.fileApp?.executablePath || app.executablePath || app.paths[0], app.steam === "si");
+    openBtn.onclick = app.updateAvailable 
+      ? () => window.location.href = `program-updates.html?id=${app.id}`
+      : () => window.api.openApp(app.fileApp?.executablePath || app.executablePath || app.paths[0], app.steam === "si");
     if (isUninstalling) openBtn.style.display = "none";
     topRow.appendChild(openBtn);
 

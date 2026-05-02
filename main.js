@@ -863,10 +863,10 @@ async function installFilesAppLogic(fileApp) {
 
   await extractZip(finalZipPath, { dir: extractPath });
 
-  if (fileApp.checksumUrl && fileApp.checksumPath && fileApp.checksumFile) {
+  if (fileApp.checksumUrl && fileApp.checksumFile) {
     try {
       const checksumText = await fetchRemoteText(fileApp.checksumUrl);
-      const checksumDir = resolveWindowsPath(fileApp.checksumPath);
+      const checksumDir = resolveWindowsPath(fileApp.checksumPath || fileApp.extractPath);
       if (!fs.existsSync(checksumDir)) {
         fs.mkdirSync(checksumDir, { recursive: true });
       }
@@ -897,6 +897,10 @@ async function installFilesAppLogic(fileApp) {
     message: "Instalación completa.",
     percent: 1,
   });
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("install-complete", true, fileApp.id);
+  }
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("install-complete", {
@@ -1093,6 +1097,24 @@ ipcMain.handle("get-apps", async () => {
 ipcMain.handle("get-files-apps", async () => {
   await loadFilesAppsData();
   return filesAppsData;
+});
+
+ipcMain.handle("check-checksum", async (event, id) => {
+  const app = filesAppsData.find(a => a.id === id);
+  if (!app) return { needsUpdate: false };
+
+  const checksumDir = resolveWindowsPath(app.checksumPath || app.extractPath);
+  const localPath = path.join(checksumDir, app.checksumFile);
+  if (!fs.existsSync(localPath)) return { needsUpdate: true }; // Si no existe local, probablemente necesita instalar
+
+  try {
+    const localChecksum = fs.readFileSync(localPath, 'utf8').trim();
+    const onlineChecksum = await fetchRemoteText(app.checksumUrl);
+    return { needsUpdate: localChecksum !== onlineChecksum.trim() };
+  } catch (e) {
+    console.error('Error checking checksum for', id, e);
+    return { needsUpdate: false }; // En caso de error, asumir no necesita update
+  }
 });
 
 ipcMain.handle("get-steam-games", async () => {

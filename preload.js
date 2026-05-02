@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("api", {
   getApps: () => ipcRenderer.invoke("get-apps"),
   getFilesApps: () => ipcRenderer.invoke("get-files-apps"),
+  checkChecksum: (id) => ipcRenderer.invoke("check-checksum", id),
   installApp: (app) => ipcRenderer.invoke("install-app", app),
   installProgramById: (id) => ipcRenderer.invoke("install-program-by-id", id),
   getSteamGames: () => ipcRenderer.invoke("get-steam-games"),
