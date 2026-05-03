@@ -11,13 +11,13 @@ const {
   Tray,
   Menu,
 } = require("electron");
+const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const { pathToFileURL } = require("url");
 const { spawn, exec } = require("child_process");
 const { autoUpdater } = require("electron-updater");
-const extractZip = require("extract-zip");
 const SteamPath = require("steam-path");
 const gameScanner = require("@equal-games/game-scanner");
 const DiscordRPC = require("discord-rpc");
@@ -770,11 +770,37 @@ function getCachedFilesApp(id) {
   return filesAppsData.find((item) => item.id === id);
 }
 
+function get7zipPath() {
+  const isPackaged = app.isPackaged;
+  if (isPackaged) {
+    return path.join(process.resourcesPath, "assets", "extraFiles", "7zr.exe");
+  }
+  return path.join(__dirname, "assets", "extraFiles", "7zr.exe");
+}
+
 function getCachedApp(id) {
   return appsData.find((item) => item.id === id);
 }
 
+function clearDownloadDir() {
+  const dir = path.join(
+    app.getPath("appData"),
+    "StormGamesStudios",
+    "StormStore",
+    "downloads",
+  );
+  try {
+    if (fs.existsSync(dir)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(dir, { recursive: true });
+  } catch (err) {
+    console.error("Error clearing downloads directory:", err);
+  }
+}
+
 async function installFilesAppLogic(fileApp) {
+  clearDownloadDir();
   const downloadDir = getDownloadDir();
   const tempFolder = path.join(downloadDir, fileApp.id);
   if (!fs.existsSync(tempFolder)) {
@@ -853,22 +879,8 @@ async function installFilesAppLogic(fileApp) {
   if (!fs.existsSync(extractPath)) {
     fs.mkdirSync(extractPath, { recursive: true });
   } else {
-    // Eliminar archivos antiguos antes de extraer los nuevos
-    try {
-      const files = fs.readdirSync(extractPath);
-      for (const file of files) {
-        const filePath = path.join(extractPath, file);
-        const stat = fs.statSync(filePath);
-        if (stat.isDirectory()) {
-          fs.rmSync(filePath, { recursive: true, force: true });
-        } else {
-          fs.unlinkSync(filePath);
-        }
-      }
-      console.log(`Archivos antiguos eliminados de: ${extractPath}`);
-    } catch (err) {
-      console.warn(`No se pudieron eliminar archivos antiguos en ${extractPath}:`, err.message);
-    }
+    fs.rmSync(extractPath, { recursive: true, force: true });
+    fs.mkdirSync(extractPath, { recursive: true });
   }
 
   sendInstallProgress({
@@ -878,7 +890,16 @@ async function installFilesAppLogic(fileApp) {
     percent: 0,
   });
 
-  await extractZip(finalZipPath, { dir: extractPath });
+  const sevenZipPath = get7zipPath();
+  await new Promise((resolve, reject) => {
+    const _7z = spawn(sevenZipPath, ["x", finalZipPath, `-o${extractPath}`, "-y"]);
+    
+    _7z.on("error", reject);
+    _7z.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`7zip falló con código ${code}`));
+    });
+  });
 
   if (fileApp.checksumUrl && fileApp.checksumFile) {
     try {
@@ -900,13 +921,7 @@ async function installFilesAppLogic(fileApp) {
     }
   }
 
-  try {
-    if (fs.existsSync(tempFolder)) {
-      fs.rmSync(tempFolder, { recursive: true, force: true });
-    }
-  } catch (err) {
-    console.warn("No se pudieron limpiar archivos temporales:", err.message);
-  }
+  clearDownloadDir();
 
   sendInstallProgress({
     id: fileApp.id,
@@ -1313,6 +1328,7 @@ ipcMain.handle("get-epic-games", async () => {
 });
 
 async function installAppLogic(appData) {
+  clearDownloadDir();
   const downloadUrl = appData.download || appData.downloadUrl;
   if (!downloadUrl) {
     throw new Error("No se encontró URL de descarga para esta aplicación");
@@ -1371,9 +1387,7 @@ async function installAppLogic(appData) {
       }
 
       setTimeout(() => {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+        clearDownloadDir();
       }, 10000);
 
       if (mainWindow) {
@@ -1700,6 +1714,7 @@ if (!gotLock) {
     }
 
     loadFilesAppsData();
+    clearDownloadDir();
 
     // Manejador del protocolo storm-asset://
     protocol.handle("storm-asset", (request) => {
