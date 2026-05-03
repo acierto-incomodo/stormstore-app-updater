@@ -891,9 +891,18 @@ async function installFilesAppLogic(fileApp) {
   });
 
   const sevenZipPath = get7zipPath();
+  const sevenZipArgs = ["x", finalZipPath, `-o${extractPath}`, "-y"];
+
+  console.log(`[7-Zip Debug] 7-Zip Path: ${sevenZipPath}`);
+  console.log(`[7-Zip Debug] Archive Path: ${finalZipPath}`);
+  console.log(`[7-Zip Debug] Extraction Path: ${extractPath}`);
+  console.log(`[7-Zip Debug] Full Command: ${sevenZipPath} ${sevenZipArgs.join(' ')}`);
+
   await new Promise((resolve, reject) => {
-    const _7z = spawn(sevenZipPath, ["x", finalZipPath, `-o${extractPath}`, "-y"]);
+    const _7z = spawn(sevenZipPath, sevenZipArgs);
     
+    _7z.stdout.on('data', (data) => console.log(`[7-Zip stdout] ${data}`));
+    _7z.stderr.on('data', (data) => console.error(`[7-Zip stderr] ${data}`));
     _7z.on("error", reject);
     _7z.on("close", (code) => {
       if (code === 0) resolve();
