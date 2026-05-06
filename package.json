@@ -1,6 +1,6 @@
 {
   "name": "stormstore",
-  "version": "2.0.4119",
+  "version": "2.0.4120",
   "description": "Tienda de aplicaciones de StormGamesStudios",
   "author": "StormGamesStudios",
   "main": "main.js",
@@ -93,6 +93,8 @@
     "dayjs": "^1.11.20",
     "discord-rpc": "^4.0.1",
     "electron-debug": "^4.1.0",
+    "electron-dl": "^4.0.0",
+    "electron-dl-manager": "^4.2.3",
     "electron-progressbar": "^2.2.1",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.8.3",
