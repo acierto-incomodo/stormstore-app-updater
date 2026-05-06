@@ -733,7 +733,7 @@ function validateZipFile(filePath) {
     try {
       const stats = fs.statSync(filePath);
       if (stats.size < 100) {
-        return reject(new Error(`Archivo muy pequeño (${stats.size} bytes)`));
+        return reject(new Error(`El archivo descargado es demasiado pequeño (${stats.size} bytes). Posible descarga fallida.`));
       }
 
       const zipBuffer = Buffer.alloc(4);
@@ -742,8 +742,10 @@ function validateZipFile(filePath) {
       fs.closeSync(fd);
 
       const zipMagic = zipBuffer.toString('hex');
-      if (zipMagic !== '504b0304' && zipMagic !== '504b0506' && zipMagic !== '504b0708') {
-        return reject(new Error(`Magic bytes inválidos: ${zipMagic}`));
+      // PK (ZIP), 7z, o RAR
+      const validMagics = ['504b0304', '504b0506', '504b0708', '377abcaf', '52617221'];
+      if (!validMagics.includes(zipMagic)) {
+        return reject(new Error(`Formato de archivo no reconocido o corrupto (Magic: ${zipMagic}).`));
       }
 
       resolve();
@@ -835,7 +837,12 @@ function getCachedFilesApp(id) {
 function get7zipPath() {
   const isPackaged = app.isPackaged;
   if (isPackaged) {
-    return path.join(process.resourcesPath, "assets", "extraFiles", "7zr.exe");
+    const paths = [
+      path.join(process.resourcesPath, "assets", "extraFiles", "7zr.exe"),
+      path.join(process.resourcesPath, "extraFiles", "7zr.exe"),
+    ];
+    for (const p of paths) { if (fs.existsSync(p)) return p; }
+    return paths[0];
   }
   return path.join(__dirname, "assets", "extraFiles", "7zr.exe");
 }
@@ -865,14 +872,15 @@ async function installFilesAppLogic(fileApp) {
   clearDownloadDir();
   const downloadDir = getDownloadDir();
   const tempFolder = path.join(downloadDir, fileApp.id);
-  if (!fs.existsSync(tempFolder)) {
-    fs.mkdirSync(tempFolder, { recursive: true });
+  if (fs.existsSync(tempFolder)) {
+    fs.rmSync(tempFolder, { recursive: true, force: true });
   }
+  fs.mkdirSync(tempFolder, { recursive: true });
 
   const filesToDownload = Array.isArray(fileApp.files) ? fileApp.files : [];
   const downloadBase = fileApp.downloadUrl || "";
   const filePaths = [];
-  let totalExpected = 0;
+  let totalOverallSize = 0;
   let totalDownloaded = 0;
   let lastTotalBytes = 0;
 
@@ -918,16 +926,16 @@ async function installFilesAppLogic(fileApp) {
           currentPart: index + 1,
           parts: filesToDownload.length,
           downloaded: totalDownloaded,
-          total: totalExpected || totalDownloaded,
+          total: Math.max(totalOverallSize, totalDownloaded),
           speed,
-          percent: overallPercent || (total ? downloaded / total : 0),
+          percent: total > 0 ? (lastTotalBytes + downloaded) / Math.max(totalOverallSize, lastTotalBytes + total) : 0,
           message: `Descargando ${fileName}`,
         });
       },
     );
 
     if (fileProgress.total) {
-      totalExpected += fileProgress.total;
+      totalOverallSize += fileProgress.total;
     }
     lastTotalBytes = totalDownloaded;
   }
@@ -992,10 +1000,11 @@ async function installFilesAppLogic(fileApp) {
 
   const sevenZipPath = get7zipPath();
   if (!fs.existsSync(sevenZipPath)) {
-    throw new Error(`No se encontró 7zr.exe en: ${sevenZipPath}`);
+    throw new Error(`No se encontró el ejecutable de extracción en: ${sevenZipPath}`);
   }
 
-  const sevenZipArgs = ["x", finalZipPath, `-o${extractPath}`, "-y"];
+  const normalizedExtractPath = extractPath.replace(/[\\/]+$/, "");
+  const sevenZipArgs = ["x", finalZipPath, `-o${normalizedExtractPath}`, "-y", "-aoa"];
 
   console.log(`[7-Zip Debug] 7-Zip Path: ${sevenZipPath}`);
   console.log(`[7-Zip Debug] Archive Path: ${finalZipPath}`);
