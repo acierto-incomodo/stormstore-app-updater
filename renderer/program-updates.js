@@ -15,13 +15,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   let totalSize = 0;
   let currentAppName = "";
 
-  const isBatch = params.get('batch') === 'true';
-  const batchIds = isBatch ? params.get('ids').split(',') : [];
+  const isBatch = params.get("batch") === "true";
+  const batchIds = isBatch ? params.get("ids").split(",") : [];
   let currentBatchIndex = 0;
 
   if (isBatch && batchIds.length > 0) {
     selectedId = batchIds[0];
-    document.title = 'Actualizando programas - StormStore';
+    document.title = "Actualizando programas - StormStore";
   }
 
   const navButtons = [
@@ -47,7 +47,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (disable) {
       window.onbeforeunload = (event) => {
         event.preventDefault();
-        event.returnValue = "La instalación está en curso. Debes esperar a que termine.";
+        event.returnValue =
+          "La instalación está en curso. Debes esperar a que termine.";
       };
     } else {
       window.onbeforeunload = null;
@@ -90,14 +91,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     progressFill.style.width = `${Math.min(100, Math.max(0, percent * 100))}%`;
     downloadedText.textContent = formatBytes(progress.downloaded || 0);
-    totalText.textContent = totalSize > 0 ? formatBytes(totalSize) : (progress.total ? formatBytes(progress.total) : "--");
+    totalText.textContent =
+      totalSize > 0
+        ? formatBytes(totalSize)
+        : progress.total
+          ? formatBytes(progress.total)
+          : "--";
     speedText.textContent = formatSpeed(progress.speed);
     setStatus(progress.message || "Procesando...");
   };
 
   const getFileSize = async (url) => {
-    const response = await fetch(url, { method: 'HEAD' });
-    const contentLength = response.headers.get('content-length');
+    const response = await fetch(url, { method: "HEAD" });
+    const contentLength = response.headers.get("content-length");
     return contentLength ? parseInt(contentLength, 10) : 0;
   };
 
@@ -113,7 +119,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const size = await getFileSize(fileApp.downloadUrl + file);
             totalSize += size;
           } catch (e) {
-            console.error('Error getting size for', file, e);
+            console.error("Error getting size for", file, e);
           }
         }
       }
@@ -121,13 +127,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (isBatch) {
         const total = batchIds.length;
         const current = currentBatchIndex + 1;
-        if (titleText) titleText.textContent = `${currentAppName} - Descargando...`;
+        if (titleText)
+          titleText.textContent = `${currentAppName} - Descargando...`;
         setStatus(`Actualizando ${current} de ${total}: ${currentAppName}`);
       } else {
-        if (titleText) titleText.textContent = `${currentAppName} - Descargando...`;
+        if (titleText)
+          titleText.textContent = `${currentAppName} - Descargando...`;
         setStatus("Iniciando descarga...");
       }
-      updateProgressUI({ downloaded: 0, total: totalSize, percent: 0, speed: 0 });
+      updateProgressUI({
+        downloaded: 0,
+        total: totalSize,
+        percent: 0,
+        speed: 0,
+      });
     } catch (err) {
       console.error("Error fetching program info:", err);
     }
@@ -189,8 +202,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             setTimeout(() => startInstall(), 1000);
           });
         } else {
-          setStatus('Todas las actualizaciones completadas.');
-          if (titleText) titleText.textContent = `${currentAppName} - Completado`;
+          setStatus("Todas las actualizaciones completadas.");
+          if (titleText)
+            titleText.textContent = `${currentAppName} - Completado`;
           disableNavigation(false);
           window.api.setProgressBar(-1);
         }
@@ -218,16 +232,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  document
-    .getElementById("open-updates")
-    ?.addEventListener("click", () => {
-      if (!isInstalling) window.location.href = "updates.html";
-    });
-  document
-    .getElementById("open-licenses")
-    ?.addEventListener("click", () => {
-      if (!isInstalling) window.location.href = "licencias.html";
-    });
+  document.getElementById("open-updates")?.addEventListener("click", () => {
+    if (!isInstalling) window.location.href = "updates.html";
+  });
+  document.getElementById("open-licenses")?.addEventListener("click", () => {
+    if (!isInstalling) window.location.href = "licencias.html";
+  });
   document.getElementById("open-info")?.addEventListener("click", () => {
     if (!isInstalling) window.location.href = "info.html";
   });
@@ -236,11 +246,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     ?.addEventListener("click", () => {
       if (!isInstalling) window.location.href = "settings.html";
     });
-  document
-    .getElementById("open-big-picture")
-    ?.addEventListener("click", () => {
-      if (!isInstalling) window.api.openBigPicture();
-    });
+  document.getElementById("open-big-picture")?.addEventListener("click", () => {
+    if (!isInstalling) window.api.openBigPicture();
+  });
 
   // Auto-start installation if ID is provided
   if (selectedId) {

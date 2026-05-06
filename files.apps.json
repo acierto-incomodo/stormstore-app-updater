@@ -460,9 +460,7 @@
   {
     "id": "stardewvalley",
     "name": "Stardew Valley",
-    "files": [
-      "Build.zip.001"
-    ],
+    "files": ["Build.zip.001"],
     "merge": true,
     "mergedName": "Build.zip",
     "extractPath": "%appdata%/StormGamesStudios/NewGameDir/StardewValley/game/Build",

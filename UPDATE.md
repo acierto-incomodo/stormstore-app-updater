@@ -3,9 +3,11 @@
 ## Cambios:
 
 ### Nuevo:
+
 - Se eliminan todos los datos antiguos antes de actualizar el programa/videojuego.
 
 ### Corrección de Errores:
+
 - Se ha corregido varios errores en la funcinalidad.
 
 ---

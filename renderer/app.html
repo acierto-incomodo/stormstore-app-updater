@@ -104,7 +104,7 @@
       <div class="source-modal">
         <h2 style="color: var(--md-sys-color-error)">¿Eliminar aplicación?</h2>
         <p id="delete-confirm-text">
-          ¿Estás seguro de que quieres eliminar completamente esta aplicación? 
+          ¿Estás seguro de que quieres eliminar completamente esta aplicación?
           Se borrarán todos los archivos locales.
         </p>
         <div
@@ -420,7 +420,8 @@
               const overlay = document.getElementById("delete-confirm-overlay");
               const confirmBtn = document.getElementById("confirm-delete-btn");
               const cancelBtn = document.getElementById("cancel-delete-btn");
-              document.getElementById("delete-confirm-text").innerHTML = `¿Estás seguro de que quieres eliminar completamente <strong>${app.name}</strong>?<br><br>Esta acción borrará la carpeta de instalación de forma permanente.`;
+              document.getElementById("delete-confirm-text").innerHTML =
+                `¿Estás seguro de que quieres eliminar completamente <strong>${app.name}</strong>?<br><br>Esta acción borrará la carpeta de instalación de forma permanente.`;
 
               overlay.classList.add("active");
 
