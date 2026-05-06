@@ -698,6 +698,11 @@ async function downloadFileWithProgress(url, dest, onProgress) {
                   fs.unlink(tempDest, () => {});
                   reject(err);
                 } else {
+                  // Log downloaded file info before validation
+                  const stats = fs.statSync(dest);
+                  const buffer = Buffer.alloc(Math.min(stats.size, 16)); // Read first 16 bytes
+                  fs.readSync(fs.openSync(dest, 'r'), buffer, 0, buffer.length, 0);
+                  console.log(`[Download Debug] File: ${dest}, Size: ${stats.size} bytes, First 16 bytes (hex): ${buffer.toString('hex')}`);
                   validateZipFile(dest)
                     .then(() => resolve({ downloaded: downloadedBytes, total: totalBytes }))
                     .catch((validationErr) => {

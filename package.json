@@ -1,6 +1,6 @@
 {
   "name": "stormstore",
-  "version": "2.0.4114",
+  "version": "2.0.4115",
   "description": "Tienda de aplicaciones de StormGamesStudios",
   "author": "StormGamesStudios",
   "main": "main.js",
@@ -82,9 +82,15 @@
   "dependencies": {
     "@equal-games/game-scanner": "^1.1.4",
     "@material/web": "^2.4.1",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.20",
     "discord-rpc": "^4.0.1",
+    "electron-debug": "^4.1.0",
+    "electron-store": "^11.0.2",
     "electron-updater": "^6.8.3",
+    "electron-util": "^1.0.0",
     "extract-zip": "^2.0.1",
+    "fs-extra": "^11.3.4",
     "steam-path": "^1.0.2"
   }
 }
