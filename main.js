@@ -915,9 +915,11 @@ async function installFilesAppLogic(fileApp) {
       partDest,
       ({ downloaded, total, speed }) => {
         totalDownloaded = lastTotalBytes + downloaded;
-        const overallPercent = totalExpected ? totalDownloaded / totalExpected : 0;
+        const totalEstimate = Math.max(totalOverallSize, lastTotalBytes + (total || 0));
+        const percent = totalEstimate > 0 ? totalDownloaded / totalEstimate : 0;
+
         if (mainWindow) {
-          mainWindow.setProgressBar(totalExpected ? totalDownloaded / totalExpected : 2);
+          mainWindow.setProgressBar(percent > 0 ? percent : 2);
         }
         sendInstallProgress({
           id: fileApp.id,
@@ -926,9 +928,9 @@ async function installFilesAppLogic(fileApp) {
           currentPart: index + 1,
           parts: filesToDownload.length,
           downloaded: totalDownloaded,
-          total: Math.max(totalOverallSize, totalDownloaded),
+          total: totalEstimate,
           speed,
-          percent: total > 0 ? (lastTotalBytes + downloaded) / Math.max(totalOverallSize, lastTotalBytes + total) : 0,
+          percent: percent,
           message: `Descargando ${fileName}`,
         });
       },
