@@ -1082,6 +1082,7 @@ async function installFilesAppLogic(fileApp) {
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("install-complete", true, fileApp.id);
+    mainWindow.webContents.send("show-toast", `¡${fileApp.name} se ha instalado correctamente!`);
   }
 
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -1505,6 +1506,7 @@ async function installAppLogic(appData) {
       percent,
       speed,
       message: `Descargando ${path.basename(filePath)}`,
+      appName: appData.name || appData.id,
     });
   });
 
@@ -1551,6 +1553,7 @@ async function installAppLogic(appData) {
         mainWindow.webContents.send("install-complete", {
           id: appData.id,
           message: "Instalación completada",
+          appName: appData.name || appData.id,
         });
       }
       resolve(true);
@@ -1576,6 +1579,7 @@ ipcMain.handle("install-app", async (_, appData) => {
       mainWindow.webContents.send("install-error", {
         id: appData.id,
         message: err.message || "Error de instalación",
+        appName: appData.name || appData.id,
       });
     }
     throw err;
@@ -1604,6 +1608,7 @@ ipcMain.handle("install-program-by-id", async (_, id) => {
       mainWindow.webContents.send("install-error", {
         id,
         message: err.message || "Error de instalación",
+        appName: appItem ? appItem.name : id,
       });
     }
     throw err;

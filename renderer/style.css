@@ -1351,6 +1351,7 @@ body.offline .requires-wifi button {
   color: var(--md-sys-color-on-surface-variant);
   line-height: 1.6;
   margin: 0;
+  text-align: center;
 }
 
 /* --- Skeletons (Estados de carga) --- */

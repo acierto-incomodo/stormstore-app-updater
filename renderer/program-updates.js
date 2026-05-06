@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let selectedId = requestedProgramId;
   let isInstalling = false;
   let totalSize = 0;
+  let currentAppName = "";
 
   const isBatch = params.get('batch') === 'true';
   const batchIds = isBatch ? params.get('ids').split(',') : [];
@@ -78,11 +79,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (selectedId !== progress.id) return;
     const percent = progress.percent || 0;
     window.api.setProgressBar(percent);
+
+    if (titleText) {
+      if (progress.phase === "extract") {
+        titleText.textContent = `${currentAppName} - Descomprimiendo...`;
+      } else if (progress.phase === "download") {
+        titleText.textContent = `${currentAppName} - Descargando...`;
+      }
+    }
+
     progressFill.style.width = `${Math.min(100, Math.max(0, percent * 100))}%`;
     downloadedText.textContent = formatBytes(progress.downloaded || 0);
     totalText.textContent = totalSize > 0 ? formatBytes(totalSize) : (progress.total ? formatBytes(progress.total) : "--");
     speedText.textContent = formatSpeed(progress.speed);
-    setStatus(progress.message || "Descargando...");
+    setStatus(progress.message || "Procesando...");
   };
 
   const getFileSize = async (url) => {
@@ -95,6 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const files = await window.api.getFilesApps();
       const fileApp = files.find((f) => f.id === selectedId);
+      currentAppName = fileApp ? fileApp.name : selectedId;
       if (fileApp && fileApp.files && Array.isArray(fileApp.files)) {
         totalSize = 0;
         for (const file of fileApp.files) {
@@ -110,10 +121,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (isBatch) {
         const total = batchIds.length;
         const current = currentBatchIndex + 1;
-        if (titleText) titleText.textContent = "Descargando...";
-        setStatus(`Actualizando ${current} de ${total}: ${fileApp ? fileApp.name : selectedId}`);
+        if (titleText) titleText.textContent = `${currentAppName} - Descargando...`;
+        setStatus(`Actualizando ${current} de ${total}: ${currentAppName}`);
       } else {
-        if (titleText) titleText.textContent = "Descargando...";
+        if (titleText) titleText.textContent = `${currentAppName} - Descargando...`;
         setStatus("Iniciando descarga...");
       }
       updateProgressUI({ downloaded: 0, total: totalSize, percent: 0, speed: 0 });
@@ -133,7 +144,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       await window.api.installProgramById(selectedId);
       setStatus("Instalación finalizada correctamente.");
-      if (titleText) titleText.textContent = "Completado";
+      if (titleText) titleText.textContent = `${currentAppName} - Completado`;
       progressFill.style.width = "100%";
       window.api.setProgressBar(-1);
     } catch (err) {
@@ -153,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.api.onInstallComplete((_event, info) => {
     if (info?.id !== selectedId) return;
     setStatus(info.message || "Instalación completada.");
-    if (titleText) titleText.textContent = "Completado";
+    if (titleText) titleText.textContent = `${currentAppName} - Completado`;
     progressFill.style.width = "100%";
     window.api.setProgressBar(-1);
   });
@@ -179,13 +190,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         } else {
           setStatus('Todas las actualizaciones completadas.');
-          if (titleText) titleText.textContent = "Completado";
+          if (titleText) titleText.textContent = `${currentAppName} - Completado`;
           disableNavigation(false);
           window.api.setProgressBar(-1);
         }
       } else {
         setStatus("Instalación completada exitosamente");
-        if (titleText) titleText.textContent = "Completado";
+        if (titleText) titleText.textContent = `${currentAppName} - Completado`;
         disableNavigation(false);
         window.api.setProgressBar(-1);
       }
