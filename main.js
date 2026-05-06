@@ -405,6 +405,24 @@ function resolveWindowsPath(p) {
   return path.normalize(p.replace(/%appdata%/gi, app.getPath("appData")));
 }
 
+function clearDirectory(folderPath) {
+  if (!folderPath) return;
+  try {
+    const resolved = resolveWindowsPath(folderPath);
+    if (!resolved || resolved === path.parse(resolved).root) {
+      console.warn("Skipping delete of invalid or root path:", resolved);
+      return;
+    }
+    if (fs.existsSync(resolved)) {
+      fs.rmSync(resolved, { recursive: true, force: true });
+    }
+    fs.mkdirSync(resolved, { recursive: true });
+  } catch (err) {
+    console.error("Error clearing directory:", err);
+    throw err;
+  }
+}
+
 function findExecutable(p) {
   const resolved = resolveWindowsPath(p);
   if (!resolved.includes("*")) {
@@ -814,11 +832,25 @@ async function installFilesAppLogic(fileApp) {
   let totalDownloaded = 0;
   let lastTotalBytes = 0;
 
-  sendInstallProgress({
-    id: fileApp.id,
-    phase: "prepare",
-    message: "Preparando descarga...",
-  });
+  const resolvedInstallPath = fileApp.extractPath
+    ? resolveWindowsPath(fileApp.extractPath)
+    : null;
+
+  if (resolvedInstallPath) {
+    sendInstallProgress({
+      id: fileApp.id,
+      phase: "prepare",
+      message: "Eliminando archivos previos...",
+      percent: 0,
+    });
+    clearDirectory(fileApp.extractPath);
+  } else {
+    sendInstallProgress({
+      id: fileApp.id,
+      phase: "prepare",
+      message: "Preparando descarga...",
+    });
+  }
 
   for (let index = 0; index < filesToDownload.length; index++) {
     const fileName = filesToDownload[index];
@@ -856,10 +888,14 @@ async function installFilesAppLogic(fileApp) {
     lastTotalBytes = totalDownloaded;
   }
 
-  const zipFileName = fileApp.mergedName || filesToDownload[0];
-  const zipFilePath = path.join(tempFolder, zipFileName);
+  if (!filesToDownload.length) {
+    throw new Error("No hay archivos configurados para descargar.");
+  }
 
-  if (fileApp.merge) {
+  if (fileApp.merge && filePaths.length > 1) {
+    const zipFileName = fileApp.mergedName || filesToDownload[0];
+    const zipFilePath = path.join(tempFolder, zipFileName);
+
     sendInstallProgress({
       id: fileApp.id,
       phase: "merge",
@@ -872,13 +908,35 @@ async function installFilesAppLogic(fileApp) {
         fs.unlinkSync(part);
       }
     });
+    filePaths.length = 0;
+    filePaths.push(zipFilePath);
   }
 
-  const finalZipPath = fileApp.merge ? zipFilePath : filePaths[0];
+  const finalZipPath = filePaths[0];
+  if (!finalZipPath || !fs.existsSync(finalZipPath)) {
+    throw new Error(`Archivo de instalación no encontrado: ${finalZipPath}`);
+  }
+
+  const stats = fs.statSync(finalZipPath);
+  if (stats.size < 100) {
+    throw new Error(`Archivo ZIP corrupto o muy pequeño (${stats.size} bytes). La descarga puede haber fallado.`);
+  }
+
+  const zipBuffer = Buffer.alloc(4);
+  const fd = fs.openSync(finalZipPath, 'r');
+  fs.readSync(fd, zipBuffer, 0, 4, 0);
+  fs.closeSync(fd);
+
+  const zipMagic = zipBuffer.toString('hex');
+  if (zipMagic !== '504b0304' && zipMagic !== '504b0506' && zipMagic !== '504b0708') {
+    throw new Error(`Archivo ZIP inválido. Magic bytes: ${zipMagic}. La descarga puede estar corrupta.`);
+  }
+
   const extractPath = resolveWindowsPath(fileApp.extractPath || path.dirname(finalZipPath));
+  const isTempExtraction = extractPath === tempFolder;
   if (!fs.existsSync(extractPath)) {
     fs.mkdirSync(extractPath, { recursive: true });
-  } else {
+  } else if (!resolvedInstallPath && !isTempExtraction) {
     fs.rmSync(extractPath, { recursive: true, force: true });
     fs.mkdirSync(extractPath, { recursive: true });
   }
@@ -891,6 +949,10 @@ async function installFilesAppLogic(fileApp) {
   });
 
   const sevenZipPath = get7zipPath();
+  if (!fs.existsSync(sevenZipPath)) {
+    throw new Error(`No se encontró 7zr.exe en: ${sevenZipPath}`);
+  }
+
   const sevenZipArgs = ["x", finalZipPath, `-o${extractPath}`, "-y"];
 
   console.log(`[7-Zip Debug] 7-Zip Path: ${sevenZipPath}`);
@@ -899,14 +961,23 @@ async function installFilesAppLogic(fileApp) {
   console.log(`[7-Zip Debug] Full Command: ${sevenZipPath} ${sevenZipArgs.join(' ')}`);
 
   await new Promise((resolve, reject) => {
+    let stderrData = "";
+    let stdoutData = "";
     const _7z = spawn(sevenZipPath, sevenZipArgs);
-    
-    _7z.stdout.on('data', (data) => console.log(`[7-Zip stdout] ${data}`));
-    _7z.stderr.on('data', (data) => console.error(`[7-Zip stderr] ${data}`));
+
+    _7z.stdout.on("data", (data) => {
+      stdoutData += data.toString();
+      console.log(`[7-Zip stdout] ${data}`);
+    });
+    _7z.stderr.on("data", (data) => {
+      stderrData += data.toString();
+      console.error(`[7-Zip stderr] ${data}`);
+    });
     _7z.on("error", reject);
     _7z.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`7zip falló con código ${code}`));
+      if (code === 0) return resolve();
+      const errorMessage = `7zip falló con código ${code}. stdout: ${stdoutData.trim()} stderr: ${stderrData.trim()}`;
+      reject(new Error(errorMessage));
     });
   });
 
