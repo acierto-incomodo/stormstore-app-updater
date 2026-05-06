@@ -76,7 +76,7 @@ function loadSettings() {
     console.error("Error leyendo ajustes:", e);
   }
   return {
-    auto_updates: true,
+    auto_updates: false,
     start_with_windows: false,
     start_minimized: false,
     show_tray: true,
@@ -261,7 +261,7 @@ protocol.registerSchemesAsPrivileged([
 // =====================================
 // CONFIGURACIÓN DE ACTUALIZACIONES
 // =====================================
-autoUpdater.autoDownload = true;
+autoUpdater.autoDownload = false;
 autoUpdater.allowDowngrade = true;
 autoUpdater.checkForUpdates();
 
