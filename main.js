@@ -647,7 +647,7 @@ async function downloadFileWithProgress(url, dest, onProgress) {
   }
 
   return new Promise((resolve, reject) => {
-    const download = (downloadUrl) => {
+    const download = (downloadUrl, retryCount = 0) => {
       const file = fs.createWriteStream(tempDest);
       let totalBytes = 0;
       let downloadedBytes = 0;
@@ -659,11 +659,15 @@ async function downloadFileWithProgress(url, dest, onProgress) {
           if (res.statusCode === 301 || res.statusCode === 302) {
             file.close();
             fs.unlink(tempDest, () => {});
-            return download(res.headers.location);
+            return download(res.headers.location, retryCount);
           }
           if (res.statusCode !== 200) {
             file.close();
             fs.unlink(tempDest, () => {});
+            if (retryCount < 2) {
+              console.warn(`Download failed with status ${res.statusCode}, retrying (${retryCount + 1}/2)...`);
+              return setTimeout(() => download(downloadUrl, retryCount + 1), 2000);
+            }
             return reject(new Error(`Status ${res.statusCode}`));
           }
 
@@ -694,7 +698,17 @@ async function downloadFileWithProgress(url, dest, onProgress) {
                   fs.unlink(tempDest, () => {});
                   reject(err);
                 } else {
-                  resolve({ downloaded: downloadedBytes, total: totalBytes });
+                  validateZipFile(dest)
+                    .then(() => resolve({ downloaded: downloadedBytes, total: totalBytes }))
+                    .catch((validationErr) => {
+                      console.warn(`Downloaded file is invalid: ${validationErr.message}. Retrying...`);
+                      fs.unlink(dest, () => {});
+                      if (retryCount < 2) {
+                        setTimeout(() => download(downloadUrl, retryCount + 1), 2000);
+                      } else {
+                        reject(new Error(`Invalid ZIP after ${retryCount + 1} retries: ${validationErr.message}`));
+                      }
+                    });
                 }
               });
             });
@@ -703,12 +717,42 @@ async function downloadFileWithProgress(url, dest, onProgress) {
         .on("error", (err) => {
           file.close();
           fs.unlink(tempDest, () => {});
+          if (retryCount < 2) {
+            console.warn(`Download error: ${err.message}. Retrying (${retryCount + 1}/2)...`);
+            return setTimeout(() => download(downloadUrl, retryCount + 1), 2000);
+          }
           reject(err);
         });
     };
     download(url);
   });
 }
+
+function validateZipFile(filePath) {
+  return new Promise((resolve, reject) => {
+    try {
+      const stats = fs.statSync(filePath);
+      if (stats.size < 100) {
+        return reject(new Error(`Archivo muy pequeño (${stats.size} bytes)`));
+      }
+
+      const zipBuffer = Buffer.alloc(4);
+      const fd = fs.openSync(filePath, 'r');
+      fs.readSync(fd, zipBuffer, 0, 4, 0);
+      fs.closeSync(fd);
+
+      const zipMagic = zipBuffer.toString('hex');
+      if (zipMagic !== '504b0304' && zipMagic !== '504b0506' && zipMagic !== '504b0708') {
+        return reject(new Error(`Magic bytes inválidos: ${zipMagic}`));
+      }
+
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 
 async function fetchRemoteText(url) {
   return new Promise((resolve, reject) => {
@@ -917,19 +961,17 @@ async function installFilesAppLogic(fileApp) {
     throw new Error(`Archivo de instalación no encontrado: ${finalZipPath}`);
   }
 
-  const stats = fs.statSync(finalZipPath);
-  if (stats.size < 100) {
-    throw new Error(`Archivo ZIP corrupto o muy pequeño (${stats.size} bytes). La descarga puede haber fallado.`);
-  }
+  sendInstallProgress({
+    id: fileApp.id,
+    phase: "validate",
+    message: "Validando archivo descargado...",
+    percent: 0.95,
+  });
 
-  const zipBuffer = Buffer.alloc(4);
-  const fd = fs.openSync(finalZipPath, 'r');
-  fs.readSync(fd, zipBuffer, 0, 4, 0);
-  fs.closeSync(fd);
-
-  const zipMagic = zipBuffer.toString('hex');
-  if (zipMagic !== '504b0304' && zipMagic !== '504b0506' && zipMagic !== '504b0708') {
-    throw new Error(`Archivo ZIP inválido. Magic bytes: ${zipMagic}. La descarga puede estar corrupta.`);
+  try {
+    await validateZipFile(finalZipPath);
+  } catch (validationErr) {
+    throw new Error(`Archivo ZIP corrupto o inválido: ${validationErr.message}`);
   }
 
   const extractPath = resolveWindowsPath(fileApp.extractPath || path.dirname(finalZipPath));
