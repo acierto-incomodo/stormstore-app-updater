@@ -6,7 +6,7 @@
     "merge": false,
     "mergedName": "Build.zip",
     "extractPath": "%appdata%/StormGamesStudios/NewGameDir/Ambidextro/game/Build",
-    "executablePath": "%appdata%/StormGamesStudios/NewGameDir/Ambidextro/game/Build/Build/Ambidextro.exe",
+    "executablePath": "%appdata%/StormGamesStudios/NewGameDir/Ambidextro/game/Build/Build/PlayGame.exe",
     "checksumFile": "Version.txt",
     "checksumPath": "%appdata%/StormGamesStudios/NewGameDir/Ambidextro/game",
     "checksumUrl": "https://github.com/acierto-incomodo/ambidextro/releases/latest/download/Version.txt",

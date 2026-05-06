@@ -499,24 +499,3 @@ function updateInternetStatus() {
 
 updateInternetStatus();
 setInterval(updateInternetStatus, 1000);
-
-// Controles de ventana
-document
-  .getElementById("min-btn")
-  ?.addEventListener("click", () => window.api.minimizeWindow());
-document
-  .getElementById("close-btn")
-  ?.addEventListener("click", () => window.api.closeWindow());
-
-const maxBtn = document.getElementById("max-btn");
-if (maxBtn) {
-  maxBtn.addEventListener("click", () => window.api.maximizeWindow());
-
-  // Estado inicial
-  window.api.isMaximized().then((isMax) => {
-    if (isMax) maxBtn.textContent = "❐";
-  });
-
-  window.api.onWindowMaximized(() => (maxBtn.textContent = "❐"));
-  window.api.onWindowRestored(() => (maxBtn.textContent = "◻"));
-}

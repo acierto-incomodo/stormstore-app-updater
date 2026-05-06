@@ -1,6 +1,6 @@
 {
   "name": "stormstore",
-  "version": "2.0.4121",
+  "version": "2.0.4124",
   "description": "Tienda de aplicaciones de StormGamesStudios",
   "author": "StormGamesStudios",
   "main": "main.js",
@@ -55,6 +55,7 @@
       "renderer/**/*",
       "assets/**/*",
       "settings.json",
+      "cosas-que-hacer/**/*",
       "!assets/extraFiles/aspnetcore-runtime-8.0.23-win-x64.exe",
       "!assets/media/trailers/**/*",
       "!assets/apps-4096x4096/**/*",
@@ -85,6 +86,7 @@
     "@material/web": "^2.4.1",
     "@mechanikadesign/custom-electron-titlebar": "^3.2.5",
     "@ryuziii/discord-rpc": "^1.0.1-rc.1",
+    "@trodi/electron-splashscreen": "^1.0.2",
     "@vibe/core": "^4.2.0",
     "axios": "^1.16.0",
     "create-desktop-shortcuts": "^1.11.1",

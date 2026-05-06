@@ -338,7 +338,12 @@ function createWindow() {
     minWidth: 1226,
     minHeight: 750,
     backgroundColor: "#00000000",
-    frame: false,
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: "#121212",
+      symbolColor: "#ffffff",
+      height: 40,
+    },
     show: false,
     backgroundMaterial: "mica",
     autoHideMenuBar: true,
