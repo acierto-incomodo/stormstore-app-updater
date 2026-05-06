@@ -640,7 +640,7 @@ function sendInstallProgress(progress) {
   }
 }
 
-async function downloadFileWithProgress(url, dest, onProgress) {
+async function downloadFileWithProgress(url, dest, onProgress, validate = true) {
   const tempDest = dest + ".tmp";
   if (!fs.existsSync(path.dirname(dest))) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -703,6 +703,11 @@ async function downloadFileWithProgress(url, dest, onProgress) {
                   const buffer = Buffer.alloc(Math.min(stats.size, 16)); // Read first 16 bytes
                   fs.readSync(fs.openSync(dest, 'r'), buffer, 0, buffer.length, 0);
                   console.log(`[Download Debug] File: ${dest}, Size: ${stats.size} bytes, First 16 bytes (hex): ${buffer.toString('hex')}`);
+                  
+                  if (!validate) {
+                    return resolve({ downloaded: downloadedBytes, total: totalBytes });
+                  }
+
                   validateZipFile(dest)
                     .then(() => resolve({ downloaded: downloadedBytes, total: totalBytes }))
                     .catch((validationErr) => {
@@ -747,8 +752,8 @@ function validateZipFile(filePath) {
       fs.closeSync(fd);
 
       const zipMagic = zipBuffer.toString('hex');
-      // PK (ZIP), 7z, o RAR
-      const validMagics = ['504b0304', '504b0506', '504b0708', '377abcaf', '52617221'];
+      // PK (ZIP), 7z, RAR, o 7z Split Volume (332af6cb)
+      const validMagics = ['504b0304', '504b0506', '504b0708', '377abcaf', '52617221', '332af6cb'];
       if (!validMagics.includes(zipMagic)) {
         return reject(new Error(`Formato de archivo no reconocido o corrupto (Magic: ${zipMagic}).`));
       }
@@ -915,6 +920,10 @@ async function installFilesAppLogic(fileApp) {
     const partDest = path.join(tempFolder, fileName);
     filePaths.push(partDest);
 
+    // Solo validamos si es el primer archivo (index 0) de un conjunto o un archivo único.
+    // Las partes .002, .003, etc., no tienen cabeceras válidas por sí mismas.
+    const shouldValidate = (index === 0);
+
     const fileProgress = await downloadFileWithProgress(
       downloadUrl,
       partDest,
@@ -939,6 +948,7 @@ async function installFilesAppLogic(fileApp) {
           message: `Descargando ${fileName}`,
         });
       },
+      shouldValidate
     );
 
     if (fileProgress.total) {
@@ -951,7 +961,11 @@ async function installFilesAppLogic(fileApp) {
     throw new Error("No hay archivos configurados para descargar.");
   }
 
-  if (fileApp.merge && filePaths.length > 1) {
+  let finalZipPath = filePaths[0];
+  // Detectar si es un archivo dividido (.001, .002...) para dejar que 7zip lo una solo
+  const isSplitArchive = filePaths.length > 1 && filePaths[0].toLowerCase().endsWith('.001');
+
+  if (fileApp.merge && filePaths.length > 1 && !isSplitArchive) {
     const zipFileName = fileApp.mergedName || filesToDownload[0];
     const zipFilePath = path.join(tempFolder, zipFileName);
 
@@ -967,11 +981,9 @@ async function installFilesAppLogic(fileApp) {
         fs.unlinkSync(part);
       }
     });
-    filePaths.length = 0;
-    filePaths.push(zipFilePath);
+    finalZipPath = zipFilePath;
   }
 
-  const finalZipPath = filePaths[0];
   if (!finalZipPath || !fs.existsSync(finalZipPath)) {
     throw new Error(`Archivo de instalación no encontrado: ${finalZipPath}`);
   }
