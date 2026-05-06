@@ -174,14 +174,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateProgressUI(progress);
   });
 
-  window.api.onInstallComplete((_event, info) => {
-    if (info?.id !== selectedId) return;
-    setStatus(info.message || "Instalación completada.");
-    if (titleText) titleText.textContent = `${currentAppName} - Completado`;
-    progressFill.style.width = "100%";
-    window.api.setProgressBar(-1);
-  });
-
   window.api.onInstallError((_event, error) => {
     if (error?.id !== selectedId) return;
     setStatus(error.message || "Error durante la instalación.");
@@ -191,8 +183,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  window.api.onInstallComplete((_event, success, id) => {
+  window.api.onInstallComplete((_event, info, legacyId) => {
+    // Normalizar argumentos para soportar objeto unificado o argumentos posicionales antiguos
+    const success = (typeof info === 'boolean') ? info : (info?.success !== false);
+    const id = (typeof info === 'boolean') ? legacyId : info?.id;
+    const message = (typeof info === 'object') ? info.message : "Instalación completada.";
+
     if (id !== selectedId) return;
+
+    setStatus(message);
+    if (titleText) titleText.textContent = `${currentAppName} - Completado`;
+    progressFill.style.width = "100%";
+    window.api.setProgressBar(-1);
+
     if (success) {
       if (isBatch) {
         currentBatchIndex++;
@@ -203,20 +206,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         } else {
           setStatus("Todas las actualizaciones completadas.");
-          if (titleText)
-            titleText.textContent = `${currentAppName} - Completado`;
           disableNavigation(false);
-          window.api.setProgressBar(-1);
         }
       } else {
-        setStatus("Instalación completada exitosamente");
-        if (titleText) titleText.textContent = `${currentAppName} - Completado`;
         disableNavigation(false);
-        window.api.setProgressBar(-1);
       }
     } else {
       setStatus("Error en la instalación");
-      window.api.setProgressBar(-1);
       disableNavigation(false);
     }
   });

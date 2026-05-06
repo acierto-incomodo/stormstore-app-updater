@@ -940,9 +940,11 @@ function clearDownloadDir() {
   );
   try {
     if (fs.existsSync(dir)) {
-      fs.rmSync(dir, { recursive: true, force: true });
+      // En Windows, rmSync puede fallar con EPERM si el sistema aún bloquea algún archivo.
+      // maxRetries ayuda a mitigar esto reintentando mientras se liberan los handles.
+      fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
     }
-    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   } catch (err) {
     console.error("Error clearing downloads directory:", err);
   }
@@ -953,7 +955,7 @@ async function installFilesAppLogic(fileApp) {
   const downloadDir = getDownloadDir();
   const tempFolder = path.join(downloadDir, fileApp.id);
   if (fs.existsSync(tempFolder)) {
-    fs.rmSync(tempFolder, { recursive: true, force: true });
+    fs.rmSync(tempFolder, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
   }
   fs.mkdirSync(tempFolder, { recursive: true });
 
@@ -1161,7 +1163,10 @@ async function installFilesAppLogic(fileApp) {
     }
   }
 
-  clearDownloadDir();
+  // Añadir un pequeño retraso antes de limpiar para asegurar que los procesos soltaron los archivos
+  setTimeout(() => {
+    clearDownloadDir();
+  }, 2000);
 
   sendInstallProgress({
     id: fileApp.id,
@@ -1171,18 +1176,12 @@ async function installFilesAppLogic(fileApp) {
   });
 
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("install-complete", true, fileApp.id);
-    mainWindow.webContents.send(
-      "show-toast",
-      `¡${fileApp.name} se ha instalado correctamente!`,
-    );
-  }
-
-  if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("install-complete", {
       id: fileApp.id,
+      success: true,
       message: "Instalación completa.",
     });
+    mainWindow.webContents.send("show-toast", `¡${fileApp.name} se ha instalado correctamente!`);
   }
 
   try {
