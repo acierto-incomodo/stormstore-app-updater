@@ -947,7 +947,12 @@ function clearDownloadDir() {
     if (fs.existsSync(dir)) {
       // En Windows, rmSync puede fallar con EPERM si el sistema aún bloquea algún archivo.
       // maxRetries ayuda a mitigar esto reintentando mientras se liberan los handles.
-      fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
+      fs.rmSync(dir, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 150,
+      });
     }
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   } catch (err) {
@@ -960,7 +965,12 @@ async function installFilesAppLogic(fileApp) {
   const downloadDir = getDownloadDir();
   const tempFolder = path.join(downloadDir, fileApp.id);
   if (fs.existsSync(tempFolder)) {
-    fs.rmSync(tempFolder, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
+    fs.rmSync(tempFolder, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 150,
+    });
   }
   fs.mkdirSync(tempFolder, { recursive: true });
 
@@ -1186,7 +1196,10 @@ async function installFilesAppLogic(fileApp) {
       success: true,
       message: "Instalación completa.",
     });
-    mainWindow.webContents.send("show-toast", `¡${fileApp.name} se ha instalado correctamente!`);
+    mainWindow.webContents.send(
+      "show-toast",
+      `¡${fileApp.name} se ha instalado correctamente!`,
+    );
   }
 
   try {

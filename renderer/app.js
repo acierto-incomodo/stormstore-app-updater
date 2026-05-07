@@ -299,7 +299,10 @@ function createAppCard(app, index) {
       uninstallBtn.textContent = hasUninstaller ? "Desinstalar" : "Eliminar";
       uninstallBtn.onclick = async (e) => {
         e.stopPropagation();
-        if (!hasUninstaller && !confirm("¿Quieres eliminar la carpeta de la aplicación?"))
+        if (
+          !hasUninstaller &&
+          !confirm("¿Quieres eliminar la carpeta de la aplicación?")
+        )
           return;
 
         uninstallingApps.add(app.id);

@@ -185,9 +185,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.api.onInstallComplete((_event, info, legacyId) => {
     // Normalizar argumentos para soportar objeto unificado o argumentos posicionales antiguos
-    const success = (typeof info === 'boolean') ? info : (info?.success !== false);
-    const id = (typeof info === 'boolean') ? legacyId : info?.id;
-    const message = (typeof info === 'object') ? info.message : "Instalación completada.";
+    const success = typeof info === "boolean" ? info : info?.success !== false;
+    const id = typeof info === "boolean" ? legacyId : info?.id;
+    const message =
+      typeof info === "object" ? info.message : "Instalación completada.";
 
     if (id !== selectedId) return;
 
