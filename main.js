@@ -110,10 +110,12 @@ function applySettings(settings) {
 
 function saveSettings(newSettings) {
   try {
+    const currentSettings = loadSettings();
+    const finalSettings = { ...currentSettings, ...newSettings };
     const dir = path.dirname(SETTINGS_PATH);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(SETTINGS_PATH, JSON.stringify(newSettings, null, 2));
-    applySettings(newSettings);
+    fs.writeFileSync(SETTINGS_PATH, JSON.stringify(finalSettings, null, 2));
+    applySettings(finalSettings);
   } catch (err) {
     console.error("Error guardando ajustes:", err);
   }

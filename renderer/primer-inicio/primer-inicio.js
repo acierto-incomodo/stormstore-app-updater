@@ -1,46 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
   const nextStepBtn = document.getElementById("next-step-btn");
-  const prevStepBtn = document.getElementById("prev-step-btn");
   const finishSetupBtn = document.getElementById("finish-setup-btn");
-
-  const step1 = document.getElementById("step-1");
-  const step2 = document.getElementById("step-2");
+  const steps = Array.from(document.querySelectorAll(".step"));
+  const dots = Array.from(document.querySelectorAll(".dot"));
 
   const autoUpdatesCheckbox = document.getElementById("auto_updates");
-  const startWithWindowsCheckbox = document.getElementById(
-    "start_with_windows",
-  );
+  const startWithWindowsCheckbox = document.getElementById("start_with_windows");
+  const showTrayCheckbox = document.getElementById("show_tray");
+  const startMinimizedCheckbox = document.getElementById("start_minimized");
 
   let currentStep = 1;
 
   function showStep(stepNumber) {
-    step1.classList.remove("active");
-    step2.classList.remove("active");
-
-    if (stepNumber === 1) {
-      step1.classList.add("active");
-    } else if (stepNumber === 2) {
-      step2.classList.add("active");
-    }
+    steps.forEach((s, i) => {
+      s.classList.toggle("active", i === stepNumber - 1);
+    });
+    dots.forEach((d, i) => {
+      d.classList.toggle("active", i === stepNumber - 1);
+    });
     currentStep = stepNumber;
   }
 
-  nextStepBtn.addEventListener("click", () => {
-    showStep(2);
+  // Navegación genérica
+  document.querySelectorAll(".next-btn").forEach(btn => {
+    btn.onclick = () => showStep(currentStep + 1);
   });
-
-  prevStepBtn.addEventListener("click", () => {
-    showStep(1);
+  document.querySelectorAll(".prev-btn").forEach(btn => {
+    btn.onclick = () => showStep(currentStep - 1);
   });
+  nextStepBtn.onclick = () => showStep(2);
 
   finishSetupBtn.addEventListener("click", async () => {
     const settings = {
       auto_updates: autoUpdatesCheckbox.checked,
       start_with_windows: startWithWindowsCheckbox.checked,
-      // Mantener los valores por defecto para show_tray y start_minimized
-      // ya que no se configuran en este primer inicio.
-      show_tray: true,
-      start_minimized: false,
+      show_tray: showTrayCheckbox.checked,
+      start_minimized: startMinimizedCheckbox.checked,
       has_completed_first_launch: true, // Marcar como completado
     };
 
@@ -63,5 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.api.getSettings().then((settings) => {
     autoUpdatesCheckbox.checked = settings.auto_updates !== false; // Default a true
     startWithWindowsCheckbox.checked = settings.start_with_windows === true;
+    showTrayCheckbox.checked = settings.show_tray !== false;
+    startMinimizedCheckbox.checked = settings.start_minimized === true;
   });
 });
