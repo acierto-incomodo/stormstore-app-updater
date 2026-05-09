@@ -262,7 +262,7 @@ function createAppCard(app, index) {
   rightActions.push({
     icon: "../assets/icons/web.svg",
     text: "Web",
-    onClick: () => window.open(`https://stormstore.vercel.app/app/${app.id}`)
+    onClick: () => window.open(`https://stormstore.vercel.app/app/${app.id}`),
   });
   if (app["share-compatibility"] === "si") {
     rightActions.push({
@@ -270,9 +270,11 @@ function createAppCard(app, index) {
       text: "Compartir",
       onClick: () => {
         playSound("others.mp3");
-        navigator.clipboard.writeText(`Juega conmigo a https://stormstore.vercel.app/app/${app.id}/run`);
+        navigator.clipboard.writeText(
+          `Juega conmigo a https://stormstore.vercel.app/app/${app.id}/run`,
+        );
         showToast("Enlace copiado");
-      }
+      },
     });
   }
 
@@ -284,7 +286,10 @@ function createAppCard(app, index) {
     btn.style.cursor = "pointer";
     const icon = btn.querySelector("img");
     if (icon) icon.style.filter = "invert(1)"; // Asegurar que iconos negros se vean blancos
-    btn.onclick = (e) => { e.stopPropagation(); action.onClick(); };
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      action.onClick();
+    };
     imgContainer.appendChild(btn);
   });
 
@@ -299,8 +304,12 @@ function createAppCard(app, index) {
 
   if (app.installed) {
     const isUninstalling = uninstallingApps.has(app.id);
-    const isGame = (Array.isArray(app.category) ? app.category.includes("Juegos") : app.category === "Juegos") || 
-                   app.id.startsWith("steam-") || app.id.startsWith("epic-");
+    const isGame =
+      (Array.isArray(app.category)
+        ? app.category.includes("Juegos")
+        : app.category === "Juegos") ||
+      app.id.startsWith("steam-") ||
+      app.id.startsWith("epic-");
 
     if (isUninstalling) {
       const loadingBtn = document.createElement("button");
@@ -320,7 +329,11 @@ function createAppCard(app, index) {
       openBtn.textContent = isGame ? "Jugar" : "Abrir";
       openBtn.className = "md-btn md-btn-filled";
       openBtn.style.flex = "1";
-      openBtn.onclick = () => window.api.openApp(app.fileApp?.executablePath || app.executablePath || app.paths[0], app.steam === "si");
+      openBtn.onclick = () =>
+        window.api.openApp(
+          app.fileApp?.executablePath || app.executablePath || app.paths[0],
+          app.steam === "si",
+        );
       row1.appendChild(openBtn);
 
       const locBtn = document.createElement("button");
@@ -329,7 +342,12 @@ function createAppCard(app, index) {
       locBtn.style.flex = "1";
       locBtn.onclick = () => {
         playSound("others.mp3");
-        window.api.openAppLocation(app.fileApp?.executablePath || app.installPath || app.executablePath || app.paths[0]);
+        window.api.openAppLocation(
+          app.fileApp?.executablePath ||
+            app.installPath ||
+            app.executablePath ||
+            app.paths[0],
+        );
         showToast("Abriendo ubicación...");
       };
       row1.appendChild(locBtn);
@@ -348,17 +366,26 @@ function createAppCard(app, index) {
       uninstallBtn.textContent = hasUninstaller ? "Desinstalar" : "Eliminar";
       uninstallBtn.onclick = async (e) => {
         e.stopPropagation();
-        if (!hasUninstaller && !confirm("¿Quieres eliminar la carpeta de la aplicación?")) return;
+        if (
+          !hasUninstaller &&
+          !confirm("¿Quieres eliminar la carpeta de la aplicación?")
+        )
+          return;
         uninstallingApps.add(app.id);
         playSound("others.mp3");
-        showToast(hasUninstaller ? `Desinstalando ${app.name}…` : `Eliminando archivos de ${app.name}…`);
+        showToast(
+          hasUninstaller
+            ? `Desinstalando ${app.name}…`
+            : `Eliminando archivos de ${app.name}…`,
+        );
         renderApps(currentCategory);
         try {
           if (hasUninstaller) await window.api.uninstallApp(app.uninstall);
           else await window.api.deleteAppFolder(app.paths[0]);
           playSound("finish.mp3");
         } catch (error) {
-          if (!error.message.includes("INSTALL_CANCELLED")) console.error(error);
+          if (!error.message.includes("INSTALL_CANCELLED"))
+            console.error(error);
         } finally {
           uninstallingApps.delete(app.id);
           renderApps(currentCategory);
@@ -385,7 +412,9 @@ function createAppCard(app, index) {
         }
         installingApps.add(app.id);
         playSound("others.mp3");
-        showToast(`${app.updateAvailable ? "Actualizando" : "Reinstalando"} ${app.name}…`);
+        showToast(
+          `${app.updateAvailable ? "Actualizando" : "Reinstalando"} ${app.name}…`,
+        );
         renderApps(currentCategory);
         try {
           await window.api.installApp(app);

@@ -102,6 +102,9 @@ function applySettings(settings) {
       tray = null;
     }
   }
+
+  // 3. Actualizaciones automáticas
+  autoUpdater.autoDownload = settings.auto_updates;
 }
 
 function saveSettings(newSettings) {
@@ -261,7 +264,7 @@ protocol.registerSchemesAsPrivileged([
 // =====================================
 // CONFIGURACIÓN DE ACTUALIZACIONES
 // =====================================
-autoUpdater.autoDownload = false;
+autoUpdater.autoDownload = loadSettings().auto_updates;
 autoUpdater.allowDowngrade = true;
 autoUpdater.checkForUpdates();
 
