@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bienvenido a StormStore</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="primer-inicio.css" />
+    <link rel="icon" type="image/png" href="../../assets/app.png" />
+  </head>
+  <body>
+    <div class="first-launch-container">
+      <div class="first-launch-card">
+        <div id="step-1" class="step active">
+          <img
+            src="../../assets/app.png"
+            alt="StormStore Logo"
+            class="app-logo"
+          />
+          <h1>¡Bienvenido a StormStore!</h1>
+          <p>
+            Gracias por instalar StormStore. Te guiaremos a través de una
+            configuración rápida para que puedas empezar a disfrutar de tus
+            juegos y aplicaciones.
+          </p>
+          <button id="next-step-btn" class="md-btn md-btn-filled">
+            Empezar
+          </button>
+        </div>
+
+        <div id="step-2" class="step">
+          <h2>Configuración inicial</h2>
+          <p>
+            Puedes ajustar estas opciones ahora o cambiarlas más tarde en
+            Ajustes.
+          </p>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Actualizaciones automáticas</h3>
+              <p>
+                StormStore buscará e instalará actualizaciones automáticamente
+                al iniciar.
+              </p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="auto_updates" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Iniciar con Windows</h3>
+              <p>Abrir la aplicación automáticamente al encender el equipo.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="start_with_windows" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="navigation-buttons">
+            <button id="prev-step-btn" class="md-btn md-btn-tonal">
+              Anterior
+            </button>
+            <button id="finish-setup-btn" class="md-btn md-btn-filled">
+              Finalizar y Abrir StormStore
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="primer-inicio.js"></script>
+  </body>
+</html>

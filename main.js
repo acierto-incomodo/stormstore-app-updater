@@ -79,6 +79,7 @@ function loadSettings() {
     auto_updates: false,
     start_with_windows: false,
     start_minimized: false,
+    has_completed_first_launch: false,
     show_tray: true,
   };
 }
@@ -376,12 +377,14 @@ function createWindow() {
     (settings.start_minimized || process.argv.includes("--start-minimized")) &&
     !startInBigPicture;
 
-  win.loadFile(
-    path.join(
-      __dirname,
-      startInBigPicture ? "renderer/bigpicture.html" : "renderer/index.html",
-    ),
-  );
+  const firstLaunch = !settings.has_completed_first_launch;
+  let targetFile = startInBigPicture ? "renderer/bigpicture.html" : "renderer/index.html";
+
+  if (firstLaunch && !startInBigPicture) {
+    targetFile = "renderer/primer-inicio/primer-inicio.html";
+  }
+
+  win.loadFile(path.join(__dirname, targetFile));
 
   win.once("ready-to-show", () => {
     if (startInBigPicture) {
