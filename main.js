@@ -380,7 +380,9 @@ function createWindow() {
     !startInBigPicture;
 
   const firstLaunch = !settings.has_completed_first_launch;
-  let targetFile = startInBigPicture ? "renderer/bigpicture.html" : "renderer/index.html";
+  let targetFile = startInBigPicture
+    ? "renderer/bigpicture.html"
+    : "renderer/index.html";
 
   if (firstLaunch && !startInBigPicture) {
     targetFile = "renderer/primer-inicio/primer-inicio.html";
@@ -1633,6 +1635,7 @@ async function installAppLogic(appData) {
         appName: appData.name || appData.id,
       });
     },
+    false, // Desactivar validación de ZIP para instaladores .exe
   );
 
   if (mainWindow) mainWindow.setProgressBar(2);
