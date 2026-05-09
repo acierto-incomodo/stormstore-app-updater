@@ -20,6 +20,8 @@
           src="../assets/icons/virus.svg"
           class="virus-alert-icon"
           style="
+            width: 128px;
+            height: 128px;
             filter: invert(34%) sepia(85%) saturate(2443%) hue-rotate(334deg)
               brightness(91%) contrast(101%);
           "
@@ -238,8 +240,8 @@
           <img
             src="../assets/icons/basura.svg"
             style="
-              width: 192px;
-              height: 192px;
+              width: 128px;
+              height: 128px;
               filter: invert(34%) sepia(85%) saturate(2443%) hue-rotate(334deg)
                 brightness(91%) contrast(101%);
             "
@@ -320,32 +322,6 @@
       }
     </script>
     <script>
-      function playSound(soundFile) {
-        new Audio(`../assets/media/sounds/${soundFile}`).play();
-      }
-
-      // Lógica de la alerta de virus personalizada
-      window.api.onShowVirusAlert((_event, appName) => {
-        const overlay = document.getElementById("virus-alert-overlay");
-        const text = document.getElementById("virus-alert-text");
-        const cancelBtn = document.getElementById("virus-cancel-btn");
-        const continueBtn = document.getElementById("virus-continue-btn");
-
-        playSound("error.mp3");
-        text.innerHTML = `La aplicación <strong>${appName}</strong> ha sido marcada con una alerta de seguridad.<br><br>Es posible que sea un virus. ¿Deseas continuar?`;
-        overlay.classList.add("active");
-
-        cancelBtn.onclick = () => {
-          playSound("back.mp3");
-          overlay.classList.remove("active");
-          window.api.sendVirusAlertResponse(false);
-        };
-        continueBtn.onclick = () => {
-          overlay.classList.remove("active");
-          window.api.sendVirusAlertResponse(true);
-        };
-      });
-
       // Controles de ventana
       document
         .getElementById("min-btn")

@@ -1709,16 +1709,18 @@ ipcMain.handle("install-app", async (_, appData) => {
 ipcMain.handle("install-program-by-id", async (_, id) => {
   const appItem = getCachedApp(id);
   try {
+    // SECURITY CHECK: Always check for virus alert if metadata is available
+    if (appItem && appItem["virus-alert"] === "alert") {
+      const proceed = await showVirusWarning(appItem.name);
+      if (!proceed) return false;
+    }
+
     const filesEntry = getCachedFilesApp(id);
     if (filesEntry) {
       return await installFilesAppLogic(filesEntry);
     }
 
     if (appItem) {
-      if (appItem["virus-alert"] === "alert") {
-        const proceed = await showVirusWarning(appItem.name);
-        if (!proceed) return false;
-      }
       return await installAppLogic(appItem);
     }
 

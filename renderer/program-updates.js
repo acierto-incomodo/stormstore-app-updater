@@ -20,12 +20,45 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentBatchIndex = 0;
   let queueNames = {};
 
+  const playSound = (soundFile) => {
+    new Audio(`../assets/media/sounds/${soundFile}`).play();
+  };
+
+  const showVirusConfirm = async (appName) => {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById("virus-alert-overlay");
+      const text = document.getElementById("virus-alert-text");
+      const cancelBtn = document.getElementById("virus-cancel-btn");
+      const continueBtn = document.getElementById("virus-continue-btn");
+
+      playSound("error.mp3");
+      text.innerHTML = `La aplicación <strong>${appName}</strong> ha sido marcada con una alerta de seguridad.<br><br>Es posible que sea un virus. ¿Deseas continuar?`;
+      overlay.classList.add("active");
+
+      const cleanup = () => {
+        overlay.classList.remove("active");
+        cancelBtn.onclick = null;
+        continueBtn.onclick = null;
+      };
+
+      cancelBtn.onclick = () => {
+        playSound("back.mp3");
+        cleanup();
+        resolve(false);
+      };
+      continueBtn.onclick = () => {
+        cleanup();
+        resolve(true);
+      };
+    });
+  };
+
   const updateQueueUI = () => {
     const queueList = document.getElementById("update-queue");
     if (!queueList) return;
     queueList.innerHTML = "";
 
-    const idsToRender = isBatch ? batchIds : (selectedId ? [selectedId] : []);
+    const idsToRender = isBatch ? batchIds : selectedId ? [selectedId] : [];
 
     idsToRender.forEach((id, index) => {
       const li = document.createElement("li");
@@ -130,15 +163,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const loadQueueData = async () => {
     try {
-      const [apps, files] = await Promise.all([window.api.getApps(), window.api.getFilesApps()]);
+      const [apps, files] = await Promise.all([
+        window.api.getApps(),
+        window.api.getFilesApps(),
+      ]);
       const all = [...apps, ...(files || [])];
       const ids = isBatch ? batchIds : [selectedId];
-      ids.filter(Boolean).forEach(id => {
-        const found = all.find(a => a.id === id);
+      ids.filter(Boolean).forEach((id) => {
+        const found = all.find((a) => a.id === id);
         if (found) queueNames[id] = found.name;
       });
       updateQueueUI();
-    } catch (e) { console.error("Error loading queue names:", e); }
+    } catch (e) {
+      console.error("Error loading queue names:", e);
+    }
   };
 
   const getFileSize = async (url) => {
@@ -260,9 +298,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  window.api.onShowVirusAlert(async (_event, appName) => {
+    const result = await showVirusConfirm(appName);
+    window.api.sendVirusAlertResponse(result);
+  });
+
   const versionElem = document.getElementById("app-version");
   if (versionElem) {
-    window.api.getAppVersion().then(v => versionElem.textContent = "v" + v);
+    window.api.getAppVersion().then((v) => (versionElem.textContent = "v" + v));
   }
 
   window.api.setDiscordActivity({

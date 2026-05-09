@@ -407,6 +407,10 @@ function createAppCard(app, index) {
 
       updateBtn.onclick = async () => {
         if (app.fileApp) {
+          if (app["virus-alert"] === "alert") {
+            const confirmed = await showVirusConfirm(app.name);
+            if (!confirmed) return;
+          }
           window.location.href = `program-updates.html?id=${encodeURIComponent(app.id)}`;
           return;
         }
@@ -452,6 +456,10 @@ function createAppCard(app, index) {
       installBtn.textContent = "Instalar";
       installBtn.onclick = async () => {
         if (app.fileApp) {
+          if (app["virus-alert"] === "alert") {
+            const confirmed = await showVirusConfirm(app.name);
+            if (!confirmed) return;
+          }
           showToast(`Abriendo gestor de descargas para ${app.name}…`);
           window.location.href = `program-updates.html?id=${encodeURIComponent(app.id)}`;
           return;
@@ -535,6 +543,40 @@ async function showDeleteConfirm(app, hasUninstaller) {
     };
   });
 }
+
+async function showVirusConfirm(appName) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("virus-alert-overlay");
+    const text = document.getElementById("virus-alert-text");
+    const cancelBtn = document.getElementById("virus-cancel-btn");
+    const continueBtn = document.getElementById("virus-continue-btn");
+
+    playSound("error.mp3");
+    text.innerHTML = `La aplicación <strong>${appName}</strong> ha sido marcada con una alerta de seguridad.<br><br>Es posible que sea un virus. ¿Deseas continuar?`;
+    overlay.classList.add("active");
+
+    const cleanup = () => {
+      overlay.classList.remove("active");
+      cancelBtn.onclick = null;
+      continueBtn.onclick = null;
+    };
+
+    cancelBtn.onclick = () => {
+      playSound("back.mp3");
+      cleanup();
+      resolve(false);
+    };
+    continueBtn.onclick = () => {
+      cleanup();
+      resolve(true);
+    };
+  });
+}
+
+window.api.onShowVirusAlert(async (_event, appName) => {
+  const result = await showVirusConfirm(appName);
+  window.api.sendVirusAlertResponse(result);
+});
 
 function createIconButton(iconSrc, onClick) {
   const btn = document.createElement("button");
