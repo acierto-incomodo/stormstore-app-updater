@@ -1707,13 +1707,13 @@ ipcMain.handle("install-app", async (_, appData) => {
 });
 
 ipcMain.handle("install-program-by-id", async (_, id) => {
+  const appItem = getCachedApp(id);
   try {
     const filesEntry = getCachedFilesApp(id);
     if (filesEntry) {
       return await installFilesAppLogic(filesEntry);
     }
 
-    const appItem = getCachedApp(id);
     if (appItem) {
       if (appItem["virus-alert"] === "alert") {
         const proceed = await showVirusWarning(appItem.name);

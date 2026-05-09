@@ -18,6 +18,33 @@ document.addEventListener("DOMContentLoaded", async () => {
   const isBatch = params.get("batch") === "true";
   const batchIds = isBatch ? params.get("ids").split(",") : [];
   let currentBatchIndex = 0;
+  let queueNames = {};
+
+  const updateQueueUI = () => {
+    const queueList = document.getElementById("update-queue");
+    if (!queueList) return;
+    queueList.innerHTML = "";
+
+    const idsToRender = isBatch ? batchIds : (selectedId ? [selectedId] : []);
+
+    idsToRender.forEach((id, index) => {
+      const li = document.createElement("li");
+      const name = queueNames[id] || id;
+      li.textContent = name;
+      li.style.padding = "6px 10px";
+      li.style.borderRadius = "8px";
+
+      if (index === currentBatchIndex) {
+        li.style.background = "rgba(253, 216, 53, 0.15)";
+        li.style.color = "#fdd835";
+        li.style.fontWeight = "bold";
+      } else if (index < currentBatchIndex) {
+        li.style.opacity = "0.4";
+        li.style.textDecoration = "line-through";
+      }
+      queueList.appendChild(li);
+    });
+  };
 
   if (isBatch && batchIds.length > 0) {
     selectedId = batchIds[0];
@@ -99,6 +126,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           : "--";
     speedText.textContent = formatSpeed(progress.speed);
     setStatus(progress.message || "Procesando...");
+  };
+
+  const loadQueueData = async () => {
+    try {
+      const [apps, files] = await Promise.all([window.api.getApps(), window.api.getFilesApps()]);
+      const all = [...apps, ...(files || [])];
+      const ids = isBatch ? batchIds : [selectedId];
+      ids.filter(Boolean).forEach(id => {
+        const found = all.find(a => a.id === id);
+        if (found) queueNames[id] = found.name;
+      });
+      updateQueueUI();
+    } catch (e) { console.error("Error loading queue names:", e); }
   };
 
   const getFileSize = async (url) => {
@@ -198,8 +238,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.api.setProgressBar(-1);
 
     if (success) {
+      currentBatchIndex++;
+      updateQueueUI();
+
       if (isBatch) {
-        currentBatchIndex++;
         if (currentBatchIndex < batchIds.length) {
           selectedId = batchIds[currentBatchIndex];
           fetchProgramInfo().then(() => {
@@ -217,6 +259,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       disableNavigation(false);
     }
   });
+
+  const versionElem = document.getElementById("app-version");
+  if (versionElem) {
+    window.api.getAppVersion().then(v => versionElem.textContent = "v" + v);
+  }
 
   window.api.setDiscordActivity({
     details: "Descargando programa",
@@ -249,6 +296,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Auto-start installation if ID is provided
   if (selectedId) {
+    await loadQueueData();
     await fetchProgramInfo();
     startInstall();
   } else {

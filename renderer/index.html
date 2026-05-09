@@ -231,6 +231,47 @@
       </div>
     </div>
 
+    <!-- Custom Delete Confirmation Overlay -->
+    <div id="delete-confirm-overlay" class="source-modal-overlay">
+      <div class="source-modal">
+        <div style="text-align: center; margin-bottom: 16px">
+          <img
+            src="../assets/icons/basura.svg"
+            style="
+              width: 192px;
+              height: 192px;
+              filter: invert(34%) sepia(85%) saturate(2443%) hue-rotate(334deg)
+                brightness(91%) contrast(101%);
+            "
+            alt="Warning"
+          />
+        </div>
+        <h2 style="color: var(--md-sys-color-error)">¿Eliminar aplicación?</h2>
+        <p
+          id="delete-confirm-text"
+          style="text-align: center; margin-bottom: 24px"
+        >
+          ¿Estás seguro de que quieres eliminar completamente esta aplicación?
+          Se borrarán todos los archivos locales.
+        </p>
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+          "
+        >
+          <button id="cancel-delete-btn" class="md-btn md-btn-tonal">
+            Cancelar
+          </button>
+          <button id="confirm-delete-btn" class="md-btn md-btn-danger">
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="app.js"></script>
     <script src="gamepad-global.js"></script>
     <script>

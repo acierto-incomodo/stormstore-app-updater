@@ -304,6 +304,7 @@ function createAppCard(app, index) {
 
   if (app.installed) {
     const isUninstalling = uninstallingApps.has(app.id);
+    const hasUninstaller = app.uninstall && app.uninstallExists;
     const isGame =
       (Array.isArray(app.category)
         ? app.category.includes("Juegos")
@@ -316,7 +317,8 @@ function createAppCard(app, index) {
       loadingBtn.className = "md-btn md-btn-danger";
       loadingBtn.style.width = "100%";
       loadingBtn.disabled = true;
-      loadingBtn.innerHTML = `<span class="button-loading"><img src="../assets/icons/loading-new.svg"> Eliminando...</span>`;
+      const label = hasUninstaller ? "Desinstalando..." : "Eliminando...";
+      loadingBtn.innerHTML = `<span class="button-loading"><img src="../assets/icons/loading-new.svg"> ${label}</span>`;
       actions.appendChild(loadingBtn);
     } else {
       // Fila 1: [Abrir/Jugar] [Ubicación]
@@ -362,15 +364,13 @@ function createAppCard(app, index) {
       const uninstallBtn = document.createElement("button");
       uninstallBtn.className = "md-btn md-btn-danger";
       uninstallBtn.style.flex = "1";
-      const hasUninstaller = app.uninstall && app.uninstallExists;
       uninstallBtn.textContent = hasUninstaller ? "Desinstalar" : "Eliminar";
       uninstallBtn.onclick = async (e) => {
         e.stopPropagation();
-        if (
-          !hasUninstaller &&
-          !confirm("¿Quieres eliminar la carpeta de la aplicación?")
-        )
-          return;
+
+        const confirmed = await showDeleteConfirm(app, hasUninstaller);
+        if (!confirmed) return;
+
         uninstallingApps.add(app.id);
         playSound("others.mp3");
         showToast(
@@ -488,6 +488,52 @@ function createBadge(text, iconSrc, className) {
   badge.className = `req-badge ${className}`;
   badge.innerHTML = `<img src="${iconSrc}"><span>${text}</span>`;
   return badge;
+}
+
+async function showDeleteConfirm(app, hasUninstaller) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("delete-confirm-overlay");
+    const confirmBtn = document.getElementById("confirm-delete-btn");
+    const cancelBtn = document.getElementById("cancel-delete-btn");
+    const text = document.getElementById("delete-confirm-text");
+    const title = overlay.querySelector("h2");
+
+    if (hasUninstaller) {
+      title.textContent = "¿Desinstalar aplicación?";
+      text.innerHTML = `¿Estás seguro de que quieres desinstalar <strong>${app.name}</strong>? Se abrirá el desinstalador oficial del programa.`;
+      confirmBtn.textContent = "Desinstalar";
+    } else {
+      title.textContent = "¿Eliminar aplicación?";
+      text.innerHTML = `¿Estás seguro de que quieres eliminar completamente <strong>${app.name}</strong>?<br><br>Esta acción borrará la carpeta de instalación de forma permanente.`;
+      confirmBtn.textContent = "Eliminar";
+    }
+
+    overlay.classList.add("active");
+
+    const cleanup = () => {
+      overlay.classList.remove("active");
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      overlay.onclick = null;
+    };
+
+    confirmBtn.onclick = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    cancelBtn.onclick = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        cleanup();
+        resolve(false);
+      }
+    };
+  });
 }
 
 function createIconButton(iconSrc, onClick) {
