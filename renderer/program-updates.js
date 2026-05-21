@@ -287,9 +287,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         } else {
           setStatus("Todas las actualizaciones completadas.");
+          window.api.clearDownloads();
           disableNavigation(false);
         }
       } else {
+        window.api.clearDownloads();
         disableNavigation(false);
       }
     } else {
