@@ -1,5 +1,4 @@
 const { contextBridge, ipcRenderer } = require("electron");
-const dayjs = require("dayjs");
 
 contextBridge.exposeInMainWorld("api", {
   getApps: () => ipcRenderer.invoke("get-apps"),
@@ -51,11 +50,7 @@ contextBridge.exposeInMainWorld("api", {
   onShowVirusAlert: (callback) => ipcRenderer.on("show-virus-alert", callback),
   sendVirusAlertResponse: (response) =>
     ipcRenderer.send("virus-alert-response", response),
-  clearDownloads: () => ipcRenderer.invoke("clear-downloads"),
   clearCache: () => ipcRenderer.invoke("clear-cache"),
   setProgressBar: (value) => ipcRenderer.send("set-progress-bar", value),
   syncRemoteData: () => ipcRenderer.invoke("sync-remote-data"),
 });
-
-// Exponer dayjs en el contexto global
-contextBridge.exposeInMainWorld("dayjs", dayjs);

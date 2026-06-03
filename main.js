@@ -1788,11 +1788,6 @@ ipcMain.handle("install-program-by-id", async (_, id) => {
   }
 });
 
-ipcMain.handle("clear-downloads", () => {
-  clearDownloadDir();
-  return true;
-});
-
 ipcMain.handle("open-app", async (_, exePath, requiresSteam) => {
   const appItem = appsData.find((a) => a.paths.includes(exePath));
   if (appItem && appItem["virus-alert"] === "alert") {
