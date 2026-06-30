@@ -4,26 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soporte</title>
-    <link rel="stylesheet" href="soporte.css">
+    <link rel="stylesheet" href="./../style.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center; /* Centrado horizontal */
+            align-items: center;     /* Centrado vertical */
+            min-height: 100vh;       /* Ocupa todo el alto de la pantalla */
+            text-align: center;      /* Centra los textos y botones dentro de la tarjeta */
+        }
+    </style>
 </head>
 <body>
     <div class="first-launch-container">
         <div class="first-launch-card">
-            <img src="app-logo.png" alt="Logo de la aplicación" class="app-logo">
+            <img src="./../../assets/app.png" alt="Logo de la aplicación" class="app-logo">
             <h1>Bienvenido a Soporte</h1>
             <h2>Asistencia técnica</h2>
             <p>Estamos aquí para ayudarte con cualquier pregunta o problema que puedas tener.</p>
-            <form action="mailto:meliodas.aitor@gmail.com" method="post" enctype="text/plain" class="support-form">
-                <div class="form-group">
-                    <label for="asunto">Asunto</label>
-                    <input type="text" id="asunto" name="subject" required placeholder="Ej: Error en la aplicación">
-                </div>
-                <div class="form-group">
-                    <label for="mensaje">Mensaje</label>
-                    <textarea id="mensaje" name="body" rows="4" required placeholder="Describe tu problema o solicitud..."></textarea>
-                </div>
-                <button type="submit" class="submit-btn">Enviar Correo</button>
-            </form>
+            <br>
+            <p>Unete a nuestro discord para poder solicitar nuevos juegos, solicitar actualizaciones o reportar errores.</p>
+            <a href="https://discord.gg/wwxJ4guQXv" target="_blank" class="md-btn md-btn-filled">Unirse al Discord</a>
         </div>
     </div>
     <script src="soporte.js"></script>

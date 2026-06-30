@@ -107,7 +107,9 @@
           <p class="version" id="app-version"></p>
         </div>
 
-        <button id="back-btn" class="back-button">← Volver</button>
+        <button id="back-to-apps" class="back-button">
+          ← Volver a aplicaciones
+        </button>
 
         <ul id="categories"></ul>
       </div>
@@ -171,6 +173,7 @@
       </header>
 
       <div class="settings-container">
+        <!--
         <div class="setting-item">
           <div class="setting-info">
             <h3>Actualizaciones automáticas</h3>
@@ -184,6 +187,7 @@
             <span class="slider"></span>
           </label>
         </div>
+        -->
 
         <div class="setting-item">
           <div class="setting-info">
@@ -358,6 +362,13 @@
           e.preventDefault();
           confirmNavigation("settings.html");
         });
+
+      // Botón volver
+        document
+          .getElementById("back-to-apps")
+          .addEventListener("click", () => {
+            window.location.href = "index.html";
+          });
 
       document.getElementById("open-settings-header")?.classList.add("active");
 
