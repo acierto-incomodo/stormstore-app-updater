@@ -215,15 +215,14 @@ function createTray() {
 // =====================================
 const clientId = "1474762522048331787"; // ⚠️ REEMPLAZAR CON TU CLIENT ID REAL DE DISCORD
 
-let rpc = null;
-let rpcReady = false;
-
-try {
-  DiscordRPC.register(clientId);
-  rpc = new DiscordRPC.Client({ transport: "ipc" });
-} catch (e) {
-  console.log("Discord RPC no pudo iniciarse:", e);
-}
+let rpc;
+// try {
+//   DiscordRPC.register(clientId);
+//   rpc = new DiscordRPC.Client({ transport: 'ipc' });
+// } catch (e) {
+//   // Si falla la inicialización (ej. módulo corrupto), no detenemos la app
+//   console.log("Discord RPC no pudo iniciarse:", e);
+// }
 
 const startTimestamp = Date.now();
 
@@ -234,13 +233,12 @@ const defaultRpcActivity = {
   largeImageText: "StormStore",
   smallImageKey: undefined,
   smallImageText: undefined,
-  type: 3,
 };
 
 let rpcActivity = { ...defaultRpcActivity };
 
 async function setActivity() {
-  if (!rpc || !mainWindow || !rpcReady) return;
+  if (!rpc || !mainWindow) return;
 
   try {
     rpc
@@ -249,23 +247,22 @@ async function setActivity() {
         startTimestamp,
         instance: false,
       })
-      .catch(() => {});
+      .catch(() => {}); // Ignoramos errores si Discord se cierra de repente
   } catch (e) {
     // Ignoramos errores síncronos
   }
 }
 
-if (rpc) {
-  rpc.on("ready", () => {
-    rpcReady = true;
-    setActivity();
-    setInterval(() => setActivity(), 15000);
-  });
+// if (rpc) {
+//   rpc.on('ready', () => {
+//     setActivity();
+//     setInterval(() => setActivity(), 1000);
+//   });
 
-  rpc.login({ clientId }).catch(() => {
-    rpcReady = false;
-  });
-}
+//   rpc.login({ clientId }).catch(() => {
+//     // Discord no está abierto o no instalado. Ignoramos el error silenciosamente.
+//   });
+// }
 
 // ❌ StormStore SOLO WINDOWS
 if (process.platform !== "win32") {
