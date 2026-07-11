@@ -91,6 +91,7 @@
     "crypto": "^1.0.1",
     "discord-rpc": "^4.0.1",
     "electron-debug": "^4.1.0",
+    "electron-discord-register": "^1.0.0",
     "electron-dl": "^4.0.0",
     "electron-dl-manager": "^4.2.3",
     "electron-progressbar": "^2.2.1",
