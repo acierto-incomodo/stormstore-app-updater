@@ -44,6 +44,16 @@ const SETTINGS_PATH = path.join(
   "settings.json",
 );
 
+const DEFAULT_SETTINGS = Object.freeze({
+  auto_updates: false,
+  start_with_windows: false,
+  start_minimized: false,
+  start_maximized: true,
+  has_completed_first_launch: false,
+  show_tray: true,
+  debug_mode: false,
+});
+
 // Cargar datos locales iniciales
 try {
   const appsPath = path.join(app.getAppPath(), "apps.json");
@@ -68,23 +78,32 @@ let tray = null;
 // =====================================
 // GESTIÓN DE AJUSTES
 // =====================================
+function ensureSettingsFile() {
+  if (fs.existsSync(SETTINGS_PATH)) {
+    return true;
+  }
+
+  const dir = path.dirname(SETTINGS_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify({ ...DEFAULT_SETTINGS }, null, 2));
+  return false;
+}
+
 function loadSettings() {
   try {
     if (fs.existsSync(SETTINGS_PATH)) {
-      return JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf8"));
+      const savedSettings = JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf8"));
+      return { ...DEFAULT_SETTINGS, ...savedSettings };
     }
   } catch (e) {
     console.error("Error leyendo ajustes:", e);
   }
-  return {
-    auto_updates: false,
-    start_with_windows: false,
-    start_minimized: false,
-    start_maximized: true,
-    has_completed_first_launch: false,
-    show_tray: true,
-    debug_mode: false,
-  };
+
+  ensureSettingsFile();
+  return { ...DEFAULT_SETTINGS };
 }
 
 function applySettings(settings) {
@@ -114,13 +133,19 @@ function applySettings(settings) {
 function saveSettings(newSettings) {
   try {
     const currentSettings = loadSettings();
-    const finalSettings = { ...currentSettings, ...newSettings };
+    const finalSettings = {
+      ...DEFAULT_SETTINGS,
+      ...currentSettings,
+      ...newSettings,
+    };
     const dir = path.dirname(SETTINGS_PATH);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(finalSettings, null, 2));
     applySettings(finalSettings);
+    return finalSettings;
   } catch (err) {
     console.error("Error guardando ajustes:", err);
+    return null;
   }
 }
 
@@ -190,14 +215,15 @@ function createTray() {
 // =====================================
 const clientId = "1474762522048331787"; // ⚠️ REEMPLAZAR CON TU CLIENT ID REAL DE DISCORD
 
-let rpc;
-// try {
-//   DiscordRPC.register(clientId);
-//   rpc = new DiscordRPC.Client({ transport: 'ipc' });
-// } catch (e) {
-//   // Si falla la inicialización (ej. módulo corrupto), no detenemos la app
-//   console.log("Discord RPC no pudo iniciarse:", e);
-// }
+let rpc = null;
+let rpcReady = false;
+
+try {
+  DiscordRPC.register(clientId);
+  rpc = new DiscordRPC.Client({ transport: "ipc" });
+} catch (e) {
+  console.log("Discord RPC no pudo iniciarse:", e);
+}
 
 const startTimestamp = Date.now();
 
@@ -208,12 +234,13 @@ const defaultRpcActivity = {
   largeImageText: "StormStore",
   smallImageKey: undefined,
   smallImageText: undefined,
+  type: 3,
 };
 
 let rpcActivity = { ...defaultRpcActivity };
 
 async function setActivity() {
-  if (!rpc || !mainWindow) return;
+  if (!rpc || !mainWindow || !rpcReady) return;
 
   try {
     rpc
@@ -222,22 +249,23 @@ async function setActivity() {
         startTimestamp,
         instance: false,
       })
-      .catch(() => {}); // Ignoramos errores si Discord se cierra de repente
+      .catch(() => {});
   } catch (e) {
     // Ignoramos errores síncronos
   }
 }
 
-// if (rpc) {
-//   rpc.on('ready', () => {
-//     setActivity();
-//     setInterval(() => setActivity(), 1000);
-//   });
+if (rpc) {
+  rpc.on("ready", () => {
+    rpcReady = true;
+    setActivity();
+    setInterval(() => setActivity(), 15000);
+  });
 
-//   rpc.login({ clientId }).catch(() => {
-//     // Discord no está abierto o no instalado. Ignoramos el error silenciosamente.
-//   });
-// }
+  rpc.login({ clientId }).catch(() => {
+    rpcReady = false;
+  });
+}
 
 // ❌ StormStore SOLO WINDOWS
 if (process.platform !== "win32") {
@@ -381,6 +409,10 @@ function createWindow() {
     "--BigPicture",
     "--Bigpicture",
   ];
+  const settingsFileExists = fs.existsSync(SETTINGS_PATH);
+  if (!settingsFileExists) {
+    ensureSettingsFile();
+  }
   const settings = loadSettings();
   const startInBigPicture = process.argv.some((arg) =>
     vortexFlags.includes(arg),
@@ -391,7 +423,7 @@ function createWindow() {
     !startInBigPicture &&
     !updatePending;
 
-  const firstLaunch = !settings.has_completed_first_launch;
+  const firstLaunch = settings.has_completed_first_launch === false;
   let targetFile = startInBigPicture
     ? "renderer/bigpicture.html"
     : "renderer/index.html";
