@@ -40,7 +40,8 @@
       "createStartMenuShortcut": true,
       "createDesktopShortcut": true,
       "include": "build/v2-installer.nsh",
-      "differentialPackage": true
+      "differentialPackage": true,
+      "deleteAppDataOnUninstall": false
     },
     "extraResources": [
       "assets/extraFiles/7za.exe",
