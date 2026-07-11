@@ -31,8 +31,21 @@
       }
     ],
     "win": {
-      "target": "nsis",
-      "icon": "assets/app.ico"
+      "icon": "assets/app.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32", "arm64"]
+        },
+        {
+          "target": "nsis-web",
+          "arch": ["x64", "ia32", "arm64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64", "ia32", "arm64"]
+        }
+      ]
     },
     "nsis": {
       "oneClick": true,
@@ -41,6 +54,9 @@
       "createDesktopShortcut": true,
       "include": "build/v2-installer.nsh",
       "differentialPackage": true
+    },
+    "nsisWeb": {
+      "runAfterFinish": true
     },
     "extraResources": [
       "assets/extraFiles/7za.exe",
