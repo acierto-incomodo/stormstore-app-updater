@@ -1,4 +1,4 @@
-# 🚀 StormStore v2.1.9 - Interfaz y Ajustes
+# 🚀 StormStore v2.1.10 - Interfaz y Ajustes
 
 ## 📝 Registro de Cambios
 
@@ -8,4 +8,4 @@ Esta actualización introduce mejoras críticas en la visualización de la inter
 
 💛 El equipo de **StormGamesStudios**.
 
-**Registro completo de cambios**: [https://github.com/acierto-incomodo/StormStore/compare/v2.1.8...v2.1.9](https://github.com/acierto-incomodo/StormStore/compare/v2.1.7...v2.1.8)
+**Registro completo de cambios**: [https://github.com/acierto-incomodo/StormStore/compare/v2.1.9...v2.10](https://github.com/acierto-incomodo/StormStore/compare/v2.1.9...v2.1.10)
