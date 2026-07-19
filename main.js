@@ -45,14 +45,41 @@ const SETTINGS_PATH = path.join(
 );
 
 const DEFAULT_SETTINGS = Object.freeze({
-  auto_updates: false,
+  auto_updates: true,
   start_with_windows: false,
   start_minimized: false,
   start_maximized: true,
   has_completed_first_launch: false,
-  show_tray: true,
+  show_tray: false,
   debug_mode: false,
 });
+
+// Flags de compilación: cambiar aquí antes de generar el ejecutable.
+const ENABLE_SETTINGS_PAGE = false;
+const ENABLE_FIRST_LAUNCH_PAGE = false;
+
+function shouldShowErrorPage(targetUrl = "") {
+  try {
+    const parsedUrl = new URL(targetUrl);
+    if (parsedUrl.protocol !== "file:") return false;
+
+    const normalizedPath = decodeURIComponent(parsedUrl.pathname)
+      .replace(/\\/g, "/")
+      .toLowerCase();
+
+    if (normalizedPath.endsWith("/renderer/primer-inicio/primer-inicio.html")) {
+      return !ENABLE_FIRST_LAUNCH_PAGE;
+    }
+
+    if (normalizedPath.endsWith("/renderer/settings.html")) {
+      return !ENABLE_SETTINGS_PAGE;
+    }
+  } catch (error) {
+    console.warn("No se pudo analizar la URL de navegación:", error);
+  }
+
+  return false;
+}
 
 // Cargar datos locales iniciales
 try {
@@ -397,6 +424,13 @@ function createWindow() {
 
   mainWindow = win;
 
+  win.webContents.on("will-navigate", (event, navigationUrl) => {
+    if (shouldShowErrorPage(navigationUrl)) {
+      event.preventDefault();
+      win.loadFile(path.join(__dirname, "renderer/error.html"));
+    }
+  });
+
   const vortexFlags = [
     "--StormVortex",
     "--stormvortex",
@@ -427,8 +461,14 @@ function createWindow() {
 
   if (updatePending && !startInBigPicture) {
     targetFile = "renderer/updates.html";
-  } else if (firstLaunch && !startInBigPicture) {
-    targetFile = "renderer/primer-inicio/primer-inicio.html";
+  } else if (!startInBigPicture && firstLaunch) {
+    targetFile = ENABLE_FIRST_LAUNCH_PAGE
+      ? "renderer/primer-inicio/primer-inicio.html"
+      : "renderer/error.html";
+  } else if (!startInBigPicture && process.argv.includes("--open-settings")) {
+    targetFile = ENABLE_SETTINGS_PAGE
+      ? "renderer/settings.html"
+      : "renderer/error.html";
   }
 
   win.loadFile(path.join(__dirname, targetFile));
