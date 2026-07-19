@@ -91,9 +91,6 @@
     "crypto": "^1.0.1",
     "discord-rpc": "^4.0.1",
     "electron-debug": "^4.1.0",
-    "electron-discord-register": "^1.0.0",
-    "electron-dl": "^4.0.0",
-    "electron-dl-manager": "^4.2.3",
     "electron-progressbar": "^2.2.1",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.8.9",
@@ -106,5 +103,8 @@
     "regedit": "^5.1.4",
     "steam-path": "^1.0.2",
     "systeminformation": "^5.32.0"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true
   }
 }

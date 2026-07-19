@@ -134,6 +134,9 @@
           >
             <img src="../assets/icons/letter-svgrepo-com.svg" alt="Soporte" />
           </button>
+          <button id="open-news" type="button" onclick="window.location.href='./novedades/novedades.html'">
+            <img src="../assets/icons/notebook-minimalistic-svgrepo-com.svg" alt="Novedades" />
+          </button>
           <!--
         <button id="open-settings">
           <img src="../assets/icons/settings.svg" alt="Ajustes" />
@@ -360,9 +363,10 @@
       // Botón volver
         document
           .getElementById("back-to-apps")
-          .addEventListener("click", () => {
-            window.location.href = "index.html";
-          });
+          .addEventListener(
+            "click",
+            () => (window.location.href = "index.html"),
+          );
 
       document.getElementById("open-settings-header")?.classList.add("active");
 
