@@ -102,6 +102,7 @@
     "motion": "^12.42.2",
     "regedit": "^5.1.4",
     "steam-path": "^1.0.2",
+    "stormmodules-sgs": "file:stormmodules-sgs-1.0.0.tgz",
     "systeminformation": "^5.32.0"
   },
   "allowScripts": {
