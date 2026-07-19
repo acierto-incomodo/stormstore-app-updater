@@ -55,6 +55,11 @@
       .button:hover {
         background: #1d4ed8;
       }
+      .status {
+        margin-top: 12px;
+        color: #9ca3af;
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
@@ -62,6 +67,25 @@
       <h1>Página no disponible</h1>
       <p>Esta vista está desactivada en esta compilación.</p>
       <a class="button" href="index.html">Ir al inicio</a>
+      <div id="status" class="status"></div>
     </div>
+    <script>
+      // Intentar crear settings.json si no existe cuando el usuario llega aquí
+      (async () => {
+        try {
+          if (window.api && typeof window.api.ensureSettingsFile === 'function') {
+            const res = await window.api.ensureSettingsFile({ setFirstLaunchTrue: true });
+            const statusEl = document.getElementById('status');
+            if (res && res.created) {
+              statusEl.textContent = 'Archivo settings.json generado.';
+            } else {
+              statusEl.textContent = 'Archivo settings.json ya existe.';
+            }
+          }
+        } catch (e) {
+          // no hacemos nada crítico si falla
+        }
+      })();
+    </script>
   </body>
 </html>

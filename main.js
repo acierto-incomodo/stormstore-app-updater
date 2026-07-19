@@ -2021,6 +2021,27 @@ ipcMain.handle("sync-remote-data", async () => {
 
 ipcMain.handle("get-settings", () => loadSettings());
 ipcMain.on("save-settings", (event, settings) => saveSettings(settings));
+ipcMain.handle("ensure-settings-file", (event, opts = {}) => {
+  const existed = fs.existsSync(SETTINGS_PATH);
+  ensureSettingsFile();
+  const created = !existed;
+
+  let updated = false;
+  if (opts && opts.setFirstLaunchTrue) {
+    try {
+      const current = JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf8"));
+      if (current.has_completed_first_launch !== true) {
+        current.has_completed_first_launch = true;
+        fs.writeFileSync(SETTINGS_PATH, JSON.stringify(current, null, 2));
+        updated = true;
+      }
+    } catch (e) {
+      console.error("No se pudo actualizar settings.json:", e);
+    }
+  }
+
+  return { created, updated };
+});
 ipcMain.handle("get-system-information", async () => {
   const fetchSection = async (fn) => {
     try {
