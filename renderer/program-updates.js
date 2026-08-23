@@ -10,11 +10,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   const requestedProgramId = params.get("id");
   const wasAlreadyQueued = params.get("queued") === "true";
+  const isQueueMonitor = !requestedProgramId || wasAlreadyQueued;
 
   let selectedId = requestedProgramId;
   let isInstalling = false;
   let totalSize = 0;
   let currentAppName = "";
+  let monitorLoadedId = null;
 
   const isBatch = params.get("batch") === "true";
   const batchIds = isBatch ? params.get("ids").split(",") : [];
@@ -193,6 +195,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       const status = await window.api.getInstallStatus();
       globalActiveId = status?.active || null;
       globalQueueIds = [globalActiveId, ...(status?.queued || [])].filter(Boolean);
+
+      if (isQueueMonitor) {
+        if (globalActiveId && monitorLoadedId !== globalActiveId) {
+          selectedId = globalActiveId;
+          monitorLoadedId = globalActiveId;
+          await fetchProgramInfo();
+        } else if (!globalActiveId) {
+          selectedId = null;
+          monitorLoadedId = null;
+          if (titleText) titleText.textContent = "Sin descargas activas";
+          setStatus(
+            globalQueueIds.length
+              ? "Esperando a que comience la siguiente instalación..."
+              : "No hay instalaciones en curso.",
+          );
+          progressFill.style.width = "0%";
+          downloadedText.textContent = "0 B";
+          totalText.textContent = "-";
+          speedText.textContent = "0 B/s";
+        }
+      }
 
       const [apps, files] = await Promise.all([
         window.api.getApps(),
@@ -392,13 +415,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadQueueData();
     await refreshGlobalQueue();
     await fetchProgramInfo();
-    if (wasAlreadyQueued) {
+    if (wasAlreadyQueued && !globalActiveId) {
       setStatus("En cola. Puedes volver a aplicaciones para añadir más programas.");
-    } else {
+    } else if (!wasAlreadyQueued) {
       startInstall();
     }
   } else {
     setStatus("No se especificó programa a descargar.");
+    await refreshGlobalQueue();
   }
 
   setInterval(refreshGlobalQueue, 1000);
