@@ -256,10 +256,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error?.id !== selectedId) return;
     setStatus(error.message || "Error durante la instalación.");
     window.api.setProgressBar(-1);
+    if (error.code === "EPERM") {
+      showAccessBlockedConfirm(error.path);
+    }
     if (isBatch) {
       disableNavigation(false);
     }
   });
+
+  function showAccessBlockedConfirm(blockedPath) {
+    const overlay = document.getElementById("access-blocked-overlay");
+    const text = document.getElementById("access-blocked-text");
+    const cancelBtn = document.getElementById("access-blocked-cancel-btn");
+    const retryBtn = document.getElementById("access-blocked-retry-btn");
+    if (!overlay || !text || !cancelBtn || !retryBtn) return;
+
+    const folderName = blockedPath
+      ? blockedPath.split(/[\\/]/).filter(Boolean).pop()
+      : "del juego";
+    text.innerHTML = `Windows mantiene bloqueado el acceso a <strong>${folderName}</strong> durante un tiempo. Cierra el juego o cualquier ventana que la esté usando y pulsa <strong>Reintentar</strong>.`;
+    overlay.classList.add("active");
+
+    const cleanup = () => {
+      overlay.classList.remove("active");
+      cancelBtn.onclick = null;
+      retryBtn.onclick = null;
+    };
+
+    cancelBtn.onclick = cleanup;
+    retryBtn.onclick = () => {
+      cleanup();
+      startInstall();
+    };
+  }
 
   window.api.onInstallComplete((_event, info, legacyId) => {
     // Normalizar argumentos para soportar objeto unificado o argumentos posicionales antiguos

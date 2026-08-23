@@ -610,6 +610,32 @@ function getDownloadDir() {
   return dir;
 }
 
+function createDownloadSession(id) {
+  const downloadDir = getDownloadDir();
+  const safeId = String(id).replace(/[^a-z0-9._-]/gi, "_");
+  const sessionDir = path.join(
+    downloadDir,
+    `${safeId}-${Date.now()}-${crypto.randomUUID()}`,
+  );
+  fs.mkdirSync(sessionDir, { recursive: true });
+  return sessionDir;
+}
+
+function clearDownloadSession(sessionDir) {
+  try {
+    if (sessionDir && fs.existsSync(sessionDir)) {
+      fs.rmSync(sessionDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 150,
+      });
+    }
+  } catch (err) {
+    console.warn("No se pudo limpiar la carpeta temporal de descarga:", err.message);
+  }
+}
+
 async function runApp(exePath, requiresSteam) {
   try {
     if (
@@ -1064,18 +1090,7 @@ function clearDownloadDir() {
 }
 
 async function installFilesAppLogic(fileApp) {
-  clearDownloadDir();
-  const downloadDir = getDownloadDir();
-  const tempFolder = path.join(downloadDir, fileApp.id);
-  if (fs.existsSync(tempFolder)) {
-    fs.rmSync(tempFolder, {
-      recursive: true,
-      force: true,
-      maxRetries: 5,
-      retryDelay: 150,
-    });
-  }
-  fs.mkdirSync(tempFolder, { recursive: true });
+  const tempFolder = createDownloadSession(fileApp.id);
 
   const filesToDownload = Array.isArray(fileApp.files) ? fileApp.files : [];
   const downloadBase = fileApp.downloadUrl || "";
@@ -1283,7 +1298,7 @@ async function installFilesAppLogic(fileApp) {
 
   // Añadir un pequeño retraso antes de limpiar para asegurar que los procesos soltaron los archivos
   setTimeout(() => {
-    clearDownloadDir();
+    clearDownloadSession(tempFolder);
   }, 2000);
 
   sendInstallProgress({
@@ -1716,14 +1731,13 @@ ipcMain.handle("get-epic-games", async () => {
 });
 
 async function installAppLogic(appData) {
-  clearDownloadDir();
   const downloadUrl = appData.download || appData.downloadUrl;
   if (!downloadUrl) {
     throw new Error("No se encontró URL de descarga para esta aplicación");
   }
 
-  const downloadDir = getDownloadDir();
-  const filePath = path.join(downloadDir, `${appData.id}.exe`);
+  const sessionDir = createDownloadSession(appData.id);
+  const filePath = path.join(sessionDir, `${appData.id}.exe`);
 
   await downloadFileWithProgress(
     downloadUrl,
@@ -1781,7 +1795,7 @@ async function installAppLogic(appData) {
       }
 
       setTimeout(() => {
-        clearDownloadDir();
+        clearDownloadSession(sessionDir);
       }, 10000);
 
       if (mainWindow) {
@@ -1822,6 +1836,8 @@ ipcMain.handle("install-app", async (_, appData) => {
         id: appData.id,
         message: err.message || "Error de instalación",
         appName: appData.name || appData.id,
+        code: err.code,
+        path: err.path,
       });
     }
     throw err;
@@ -1853,6 +1869,8 @@ ipcMain.handle("install-program-by-id", async (_, id) => {
         id,
         message: err.message || "Error de instalación",
         appName: appItem ? appItem.name : id,
+        code: err.code,
+        path: err.path,
       });
     }
     throw err;
