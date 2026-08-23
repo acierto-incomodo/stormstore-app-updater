@@ -256,6 +256,20 @@ function createAppCard(app, index) {
   imgContainer.style.cursor = "pointer";
   imgContainer.onclick = () => (window.location.href = `app.html?id=${app.id}`);
 
+  const statusLabel = document.createElement("span");
+  statusLabel.className = "status-badge";
+  if (app.updateAvailable) {
+    statusLabel.classList.add("status-update");
+    statusLabel.textContent = "Actualizar";
+  } else if (app.installed) {
+    statusLabel.classList.add("status-installed");
+    statusLabel.textContent = "Instalada";
+  } else if (app.new === true || app.isNew === true || app.badge === "Nueva") {
+    statusLabel.classList.add("status-new");
+    statusLabel.textContent = "Nueva";
+  }
+  if (statusLabel.textContent) imgContainer.appendChild(statusLabel);
+
   const icon = document.createElement("img");
   icon.src = app.icon;
   icon.className = "app-icon";
