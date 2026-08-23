@@ -27,6 +27,9 @@ let appsData;
 let filesAppsData = [];
 let isOffline = true; // Por defecto asumimos offline hasta que la sincronización diga lo contrario
 let FILES_APPS_JSON_CACHE;
+const installQueue = [];
+let isProcessingInstallQueue = false;
+let activeInstallId = null;
 
 const ICON_SIZES = [
   // "256x256",
@@ -786,6 +789,53 @@ function sendInstallProgress(progress) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("install-progress", progress);
   }
+}
+
+function enqueueInstall(job) {
+  installQueue.push(job);
+  processInstallQueue();
+  return installQueue.length;
+}
+
+async function processInstallQueue() {
+  if (isProcessingInstallQueue) return;
+  isProcessingInstallQueue = true;
+
+  while (installQueue.length > 0) {
+    const job = installQueue.shift();
+    const appItem = job.appData || getCachedApp(job.id);
+    const id = job.id || appItem?.id;
+    activeInstallId = id;
+
+    try {
+      if (appItem && appItem["virus-alert"] === "alert") {
+        const proceed = await showVirusWarning(appItem.name);
+        if (!proceed) continue;
+      }
+
+      const filesEntry = getCachedFilesApp(id);
+      if (filesEntry) {
+        await installFilesAppLogic(filesEntry);
+      } else if (appItem) {
+        await installAppLogic(appItem);
+      } else {
+        throw new Error("Programa no encontrado");
+      }
+    } catch (err) {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("install-error", {
+          id,
+          message: err.message || "Error de instalación",
+          appName: appItem?.name || id,
+          code: err.code,
+          path: err.path,
+        });
+      }
+    }
+  }
+
+  activeInstallId = null;
+  isProcessingInstallQueue = false;
 }
 
 async function downloadFileWithProgress(
@@ -1843,6 +1893,39 @@ ipcMain.handle("install-app", async (_, appData) => {
     throw err;
   }
 });
+
+ipcMain.handle("enqueue-install", async (_, appData) => {
+  if (!appData?.id) throw new Error("Programa no válido");
+
+  const alreadyActive = activeInstallId === appData.id;
+  const existingIndex = installQueue.findIndex(
+    (job) => (job.id || job.appData?.id) === appData.id,
+  );
+  if (alreadyActive || existingIndex !== -1) {
+    return {
+      queued: true,
+      duplicate: true,
+      position: alreadyActive ? 1 : existingIndex + 2,
+    };
+  }
+
+  enqueueInstall({ id: appData.id, appData });
+  const queuePosition = installQueue.length + (isProcessingInstallQueue ? 2 : 1);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(
+      "show-toast",
+      queuePosition > 1
+        ? `${appData.name || appData.id} añadido a la cola (#${queuePosition})`
+        : `${appData.name || appData.id} añadido a la cola`,
+    );
+  }
+  return { queued: true, position: queuePosition };
+});
+
+ipcMain.handle("get-install-status", () => ({
+  active: activeInstallId,
+  queued: installQueue.map((job) => job.id || job.appData?.id).filter(Boolean),
+}));
 
 ipcMain.handle("install-program-by-id", async (_, id) => {
   const appItem = getCachedApp(id);
