@@ -2,9 +2,11 @@
 
 ## Registro de cambios
 
-### Nuevas funciones
+### Actualizaciones
+- Cambio del repositorio del proveedor de los trailers.
+- Actualización de componentes de NodeJS y NPM.
+- Actualización a la ultima versión de 7-zip.
 
-- Actualización del proveedor de los trailers.
 
 ----------
 
