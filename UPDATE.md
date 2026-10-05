@@ -2,8 +2,9 @@
 
 ## Registro de cambios
 
-### Actualizaciones
+### Correcciones
 - Reparado el sistema de ajustes. Ya se puede volver a entrar a los ajustes sin problemas y realizar cambios.
+- Corregido el error de permanencia de "Descargando..." en algunos juegos, ahora se instalaran/actualizaran de forma correcta.
 
 
 ----------
