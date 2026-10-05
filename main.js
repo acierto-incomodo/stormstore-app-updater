@@ -58,7 +58,7 @@ const DEFAULT_SETTINGS = Object.freeze({
 });
 
 // Flags de compilación: cambiar aquí antes de generar el ejecutable.
-const ENABLE_SETTINGS_PAGE = false;
+const ENABLE_SETTINGS_PAGE = true;
 const ENABLE_FIRST_LAUNCH_PAGE = false;
 
 function shouldShowErrorPage(targetUrl = "") {
@@ -2121,7 +2121,7 @@ ipcMain.handle("sync-remote-data", async () => {
 });
 
 ipcMain.handle("get-settings", () => loadSettings());
-ipcMain.on("save-settings", (event, settings) => saveSettings(settings));
+ipcMain.handle("save-settings", (event, settings) => saveSettings(settings));
 ipcMain.handle("ensure-settings-file", (event, opts = {}) => {
   const existed = fs.existsSync(SETTINGS_PATH);
   ensureSettingsFile();
