@@ -100,16 +100,16 @@
     "verified": "false"
   },
   {
-    "id": "BerryBerryBerry",
-    "name": "Berry Berry Berry",
-    "description": "Berry Berry Berry es un juego de acción y recolección donde avanzas superando desafíos y recogiendo recursos para progresar cada vez más.",
+    "id": "BerryBuryBerry",
+    "name": "Berry Bury Berry",
+    "description": "Berry Bury Berry es un juego de acción y recolección donde avanzas superando desafíos y recogiendo recursos para progresar cada vez más.",
     "category": "Juegos",
-    "icon": "../assets/apps/berry-berry-berry.png",
+    "icon": "../assets/apps/BerryBuryBerry.png",
     "paths": [
-      "%appdata%/StormGamesStudios/NewGameDir/Berry Berry Berry/game/Build/Build/BerryBerryBerryBerryBerryBerryBerryBerryBerry.exe"
+      "%appdata%/StormGamesStudios/NewGameDir/Berry Bury Berry/game/Build/Build/BerryBerryBerryBerryBerryBerryBerryBerryBerry.exe"
     ],
     "download": "https://github.com/acierto-incomodo/BerryBerryBerryGame/releases/latest/download/NoCompatibleToInstall.exe",
-    "uninstall": "%appdata%/StormGamesStudios/NewGameDir/Berry Berry Berry/unins000.exe",
+    "uninstall": "%appdata%/StormGamesStudios/NewGameDir/Berry Bury Berry/unins000.exe",
     "steam": "no",
     "wifi": "no",
     "share-compatibility": "no",
@@ -499,7 +499,7 @@
       "Audio",
       "Música"
     ],
-    "icon": "../assets/apps/flstudio.png",
+    "icon": "../assets/apps/FLStudio.png",
     "paths": [
       "%appdata%/StormGamesStudios/Programs/FL Studio/Build/FLStudioPortable.exe"
     ],
