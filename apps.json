@@ -1654,18 +1654,35 @@
     "verified": "false"
   },
   {
-    "id": "stormbrowser",
-    "name": "StormBrowser",
+    "id": "stormbrowserV3",
+    "name": "StormBrowserV3",
     "description": "StormBrowser es un navegador web personalizado por StormGamesStudios.",
     "category": ["Utilidades", "Aplicaciones"],
-    "icon": "../assets/apps/stormbrowser.png",
+    "icon": "../assets/apps/stormbrowserV3.png",
     "paths": [
       "%appdata%/StormGamesStudios/Programs/StormBrowser/StormBrowser.exe"
     ],
     "download": "https://github.com/acierto-incomodo/StormBrowser-V3/releases/download/v1.2.1/StormBrowser-Setup.exe",
     "uninstall": "%appdata%/StormGamesStudios/Programs/StormBrowser/Uninstall StormBrowser.exe",
     "steam": "no",
-    "wifi": "si",
+    "wifi": "no",
+    "share-compatibility": "si",
+    "virus-alert": "none",
+    "verified": "true"
+  },
+  {
+    "id": "stormbrowserV4",
+    "name": "StormBrowserV4",
+    "description": "StormBrowser es un navegador web personalizado por StormGamesStudios.",
+    "category": ["Utilidades", "Aplicaciones"],
+    "icon": "../assets/apps/stormbrowserV4.png",
+    "paths": [
+      "%appdata%/StormGamesStudios/Programs/StormBrowserV4/StormBrowser.exe"
+    ],
+    "download": "https://github.com/acierto-incomodo/StormBrowser-V4/releases/latest/download/StormBrowserV4-Setup.exe",
+    "uninstall": "%appdata%/StormGamesStudios/Programs/StormBrowserV4/Uninstall StormBrowserV4.exe",
+    "steam": "no",
+    "wifi": "no",
     "share-compatibility": "si",
     "virus-alert": "none",
     "verified": "true"
