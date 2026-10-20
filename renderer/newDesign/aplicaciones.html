@@ -35,8 +35,9 @@
     <!-- FontAwesome for Windows/Store Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/cards.css">
 </head>
-<body class="bg-[#191919] text-white h-screen overflow-hidden flex flex-col font-sans select-none">
+<body data-app-filter="applications" data-app-category="Aplicaciones" data-renderer-base="../" data-asset-base="../../assets/" class="bg-[#191919] text-white h-screen overflow-hidden flex flex-col font-sans select-none">
 
     <!-- Top Windows Titlebar Simulation -->
     <header class="h-10 bg-[#1f1f1f] flex items-center justify-between px-3 shrink-0 border-b border-[#2d2d2d]">
@@ -50,7 +51,7 @@
         <!-- Search Bar -->
         <div class="flex-1 max-w-xl mx-8">
             <div class="relative flex items-center">
-                <input type="text" placeholder="Buscar aplicaciones, juegos y mucho más" 
+                <input id="search" type="search" placeholder="Buscar aplicaciones, juegos y mucho más"
                     class="w-full bg-[#2c2c2c] border border-[#3c3c3c] rounded-md py-1.5 pl-4 pr-10 text-xs text-gray-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:bg-[#202020] transition-colors">
                 <i class="fa-solid fa-magnifying-glass absolute right-3 text-gray-400 text-xs"></i>
             </div>
@@ -122,47 +123,37 @@
         <main class="flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8 lg:px-10 bg-[#1e1e1e]">
             <div class="mb-8">
                 <p class="text-xs uppercase tracking-widest text-amber-400 mb-2">Explora</p>
-                <h1 class="text-3xl font-semibold text-white tracking-wide">Aplicaciones</h1>
+                <h1 id="current-category" class="text-3xl font-semibold text-white tracking-wide">Aplicaciones</h1>
                 <p class="mt-2 max-w-2xl text-sm text-gray-400">Encuentra herramientas para trabajar, crear y sacar más partido a tu equipo.</p>
             </div>
             <section aria-labelledby="categorias-heading">
-                <h2 id="categorias-heading" class="text-lg font-semibold text-white mb-4">Explora por categoría</h2>
-                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    <article class="rounded-xl border border-[#333] bg-[#242424] p-5">
-                        <i class="fa-solid fa-briefcase text-amber-400"></i>
-                        <h3 class="mt-4 font-semibold">Productividad</h3>
-                        <p class="mt-1 text-sm text-gray-400">Organiza tus tareas y trabaja de forma más eficiente.</p>
-                    </article>
-                    <article class="rounded-xl border border-[#333] bg-[#242424] p-5">
-                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
-                        <h3 class="mt-4 font-semibold">Creatividad</h3>
-                        <p class="mt-1 text-sm text-gray-400">Herramientas para diseñar, editar y dar vida a tus ideas.</p>
-                    </article>
-                    <article class="rounded-xl border border-[#333] bg-[#242424] p-5">
-                        <i class="fa-solid fa-screwdriver-wrench text-amber-400"></i>
-                        <h3 class="mt-4 font-semibold">Utilidades</h3>
-                        <p class="mt-1 text-sm text-gray-400">Pequeñas herramientas que simplifican tu día a día.</p>
-                    </article>
-                </div>
+                <h2 id="categorias-heading" class="text-lg font-semibold text-white mb-4">Explora aplicaciones</h2>
+                <ul id="categories" hidden></ul>
+                <div id="apps" class="app-card-grid" aria-live="polite"></div>
             </section>
         </main>
     </div>
 
-    <!-- Script to simulate basic interactivity -->
-    <script>
-        // Example interactivity for buttons without using alert()
-        document.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const text = btn.innerText.trim();
-                if(text === 'Buscar actualizaciones') {
-                    const originalText = btn.innerText;
-                    btn.innerText = 'Buscando...';
-                    setTimeout(() => {
-                        btn.innerText = originalText;
-                    }, 1500);
-                }
-            });
-        });
-    </script>
+    <div id="delete-confirm-overlay" class="card-modal-overlay">
+        <div class="card-modal">
+            <h2>¿Eliminar aplicación?</h2>
+            <p id="delete-confirm-text"></p>
+            <div class="card-modal-actions">
+                <button id="cancel-delete-btn" class="md-btn md-btn-tonal">Cancelar</button>
+                <button id="confirm-delete-btn" class="md-btn md-btn-danger">Eliminar</button>
+            </div>
+        </div>
+    </div>
+    <div id="virus-alert-overlay" class="card-modal-overlay">
+        <div class="card-modal">
+            <h2>¡Peligro detectado!</h2>
+            <p id="virus-alert-text"></p>
+            <div class="card-modal-actions">
+                <button id="virus-cancel-btn" class="md-btn md-btn-tonal">Cancelar</button>
+                <button id="virus-continue-btn" class="md-btn md-btn-danger">Continuar</button>
+            </div>
+        </div>
+    </div>
+    <script src="../app.js"></script>
 </body>
 </html>
