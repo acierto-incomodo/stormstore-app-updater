@@ -35,6 +35,7 @@
     <!-- FontAwesome for Windows/Store Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/biblioteca.css">
 </head>
 <body class="bg-[#191919] text-white h-screen overflow-hidden flex flex-col font-sans select-none">
 
@@ -125,37 +126,22 @@
                     <h1 class="text-3xl font-semibold text-white tracking-wide">Biblioteca</h1>
                     <p class="mt-2 max-w-2xl text-sm text-gray-400">Consulta tus aplicaciones instaladas y mantén todo actualizado.</p>
                 </div>
-                <button class="self-start bg-amber-400 hover:bg-amber-300 text-black font-medium text-xs px-4 py-2 rounded transition-colors shadow-sm sm:self-auto">
-                    Buscar actualizaciones
-                </button>
+                <div class="library-actions">
+                    <button id="check-updates-btn" class="library-button">
+                        Buscar actualizaciones
+                    </button>
+                    <button id="update-all-btn" class="library-button library-button-secondary" hidden>
+                        Actualizar todo
+                    </button>
+                </div>
             </div>
             <section aria-labelledby="actualizaciones-heading">
                 <h2 id="actualizaciones-heading" class="text-lg font-semibold text-white mb-4">Actualizaciones y descargas</h2>
-                <div class="space-y-2 pb-12" id="app-list">
-                    <div class="rounded-xl border border-[#333] bg-[#242424] px-6 py-10 text-center">
-                        <i class="fa-solid fa-download text-2xl text-gray-500"></i>
-                        <p class="mt-4 text-sm text-gray-300">Tus aplicaciones y actualizaciones aparecerán aquí.</p>
-                    </div>
-                </div>
+                <p id="updates-status" class="updates-status" role="status" aria-live="polite">Buscando actualizaciones...</p>
+                <div class="update-list" id="app-list"></div>
             </section>
         </main>
     </div>
-
-    <!-- Script to simulate basic interactivity -->
-    <script>
-        // Example interactivity for buttons without using alert()
-        document.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const text = btn.innerText.trim();
-                if(text === 'Buscar actualizaciones') {
-                    const originalText = btn.innerText;
-                    btn.innerText = 'Buscando...';
-                    setTimeout(() => {
-                        btn.innerText = originalText;
-                    }, 1500);
-                }
-            });
-        });
-    </script>
+    <script src="biblioteca.js"></script>
 </body>
 </html>
