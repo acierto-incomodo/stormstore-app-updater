@@ -102,6 +102,47 @@
   font-weight: 700;
 }
 
+.update-card-badge-error {
+  background: #cf6679;
+}
+
+.update-card-badge-complete {
+  background: #d5e8d4;
+}
+
+.update-card-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.update-card-progress[hidden] {
+  display: none;
+}
+
+.update-card-progress-track {
+  height: 0.35rem;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #3a3a3a;
+}
+
+.update-card-progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: #fbbf24;
+  transition: width 180ms ease;
+}
+
+.update-card-progress-message {
+  flex: 0 0 auto;
+  color: #a3a3a3;
+  font-size: 0.7rem;
+}
+
 .update-card-button {
   flex: 0 0 auto;
   padding: 0.55rem 1rem;
@@ -113,6 +154,11 @@
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.update-card-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .updates-status {

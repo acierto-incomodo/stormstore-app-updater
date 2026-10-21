@@ -3,6 +3,7 @@ const updatesStatus = document.getElementById("updates-status");
 const checkUpdatesButton = document.getElementById("check-updates-btn");
 const updateAllButton = document.getElementById("update-all-btn");
 const assetBase = "../../assets/";
+const updateStates = new Map();
 
 function appIconUrl(icon) {
   const rendererAssetPrefix = "../assets/";
@@ -37,8 +38,7 @@ function renderUpdates(apps) {
   updateList.innerHTML = "";
   updateAllButton.hidden = apps.length === 0;
   updateAllButton.onclick = () => {
-    const ids = encodeURIComponent(apps.map((app) => app.id).join(","));
-    window.location.href = `../program-updates.html?batch=true&ids=${ids}`;
+    queueUpdates(apps);
   };
 
   if (apps.length === 0) {
@@ -47,7 +47,10 @@ function renderUpdates(apps) {
     return;
   }
 
-  const updateCount = apps.length === 1 ? "1 actualización disponible." : `${apps.length} actualizaciones disponibles.`;
+  const updateCount =
+    apps.length === 1
+      ? "1 actualización disponible."
+      : `${apps.length} actualizaciones disponibles.`;
   setStatus(updateCount);
 
   apps.forEach((app) => {
@@ -84,19 +87,134 @@ function renderUpdates(apps) {
 
     const badge = document.createElement("span");
     badge.className = "update-card-badge";
-    badge.textContent = "Actualización";
+
+    const progressContainer = document.createElement("div");
+    progressContainer.className = "update-card-progress";
+    progressContainer.hidden = true;
+    const progressTrack = document.createElement("div");
+    progressTrack.className = "update-card-progress-track";
+    const progressFill = document.createElement("div");
+    progressFill.className = "update-card-progress-fill";
+    progressTrack.appendChild(progressFill);
+    const progressMessage = document.createElement("span");
+    progressMessage.className = "update-card-progress-message";
+    progressContainer.append(progressTrack, progressMessage);
+    details.appendChild(progressContainer);
 
     const updateButton = document.createElement("button");
     updateButton.className = "update-card-button";
     updateButton.type = "button";
-    updateButton.textContent = "Actualizar";
     updateButton.addEventListener("click", () => {
-      window.location.href = `../program-updates.html?id=${encodeURIComponent(app.id)}`;
+      queueUpdate(app);
     });
 
     card.append(icon, details, badge, updateButton);
     updateList.appendChild(card);
+    const state = getUpdateState(app.id);
+    state.card = card;
+    state.badge = badge;
+    state.button = updateButton;
+    state.progressContainer = progressContainer;
+    state.progressFill = progressFill;
+    state.progressMessage = progressMessage;
+    updateCardState(app.id);
   });
+}
+
+function getUpdateState(id) {
+  if (!updateStates.has(id)) {
+    updateStates.set(id, {
+      status: "idle",
+      percent: 0,
+      message: "",
+    });
+  }
+  return updateStates.get(id);
+}
+
+function updateCardState(id) {
+  const state = updateStates.get(id);
+  if (!state?.card) return;
+
+  const isBusy = state.status === "queued" || state.status === "downloading";
+  state.button.disabled = isBusy;
+  state.button.textContent =
+    state.status === "queued"
+      ? "En cola"
+      : state.status === "downloading"
+        ? "Actualizando..."
+        : state.status === "complete"
+          ? "Actualizado"
+          : state.status === "error"
+            ? "Reintentar"
+            : "Actualizar";
+
+  state.badge.textContent =
+    state.status === "queued"
+      ? "En cola"
+      : state.status === "downloading"
+        ? "Actualizando"
+        : state.status === "complete"
+          ? "Completado"
+          : state.status === "error"
+            ? "Error"
+            : "Actualización";
+  state.badge.classList.toggle("update-card-badge-error", state.status === "error");
+  state.badge.classList.toggle("update-card-badge-complete", state.status === "complete");
+
+  const hasProgress = isBusy || state.status === "complete";
+  state.progressContainer.hidden = !hasProgress;
+  state.progressFill.style.width = `${state.status === "complete" ? 100 : state.percent}%`;
+  state.progressMessage.textContent =
+    state.message ||
+    (state.status === "queued"
+      ? "Esperando en la cola..."
+      : state.status === "complete"
+        ? "Actualización completada"
+        : "");
+}
+
+async function queueUpdate(app) {
+  const state = getUpdateState(app.id);
+  if (state.status === "queued" || state.status === "downloading") return;
+
+  state.status = "queued";
+  state.percent = 0;
+  state.message = "Añadiendo a la cola...";
+  updateCardState(app.id);
+
+  try {
+    const result = await window.api.enqueueInstall({ id: app.id });
+    if (!result?.queued) {
+      state.status = "idle";
+      state.message = "";
+      updateCardState(app.id);
+      return;
+    }
+    if (state.status === "queued") {
+      state.message =
+        result.position > 1
+          ? `Esperando en la cola (posición ${result.position})...`
+          : "Iniciando actualización...";
+      updateCardState(app.id);
+    }
+  } catch (error) {
+    console.error("Error queueing update for", app.id, error);
+    state.status = "error";
+    state.message = error.message || "No se pudo iniciar la actualización.";
+    updateCardState(app.id);
+  }
+}
+
+async function queueUpdates(apps) {
+  updateAllButton.disabled = true;
+  try {
+    for (const app of apps) {
+      await queueUpdate(app);
+    }
+  } finally {
+    updateAllButton.disabled = false;
+  }
 }
 
 async function loadUpdates(forceSync = false) {
@@ -109,10 +227,14 @@ async function loadUpdates(forceSync = false) {
   try {
     if (forceSync) await window.api.syncRemoteData();
 
-    const [apps, fileApps] = await Promise.all([
+    const [apps, fileApps, installStatus] = await Promise.all([
       window.api.getApps(),
       window.api.getFilesApps(),
+      window.api.getInstallStatus(),
     ]);
+    const busyIds = new Set(
+      [installStatus?.active, ...(installStatus?.queued || [])].filter(Boolean),
+    );
     const fileAppsById = new Map(
       (fileApps || []).map((fileApp) => [fileApp.id, fileApp]),
     );
@@ -141,7 +263,26 @@ async function loadUpdates(forceSync = false) {
       }),
     );
     const hasCheckFailures = results.some((app) => app.checkFailed);
-    renderUpdates(results.filter((app) => app.updateAvailable));
+    const updatableApps = results.filter((app) => app.updateAvailable);
+    updatableApps.forEach((app) => {
+      const state = getUpdateState(app.id);
+      if (busyIds.has(app.id) && state.status !== "downloading") {
+        state.status =
+          installStatus.active === app.id ? "downloading" : "queued";
+        state.message =
+          state.status === "queued"
+            ? "Esperando en la cola..."
+            : "Actualizando...";
+      } else if (!busyIds.has(app.id) && state.status === "queued") {
+        state.status = "idle";
+        state.message = "";
+      } else if (!busyIds.has(app.id) && state.status === "complete") {
+        state.status = "idle";
+        state.percent = 0;
+        state.message = "";
+      }
+    });
+    renderUpdates(updatableApps);
 
     if (hasCheckFailures) {
       setStatus(
@@ -159,6 +300,50 @@ async function loadUpdates(forceSync = false) {
     checkUpdatesButton.textContent = "Buscar actualizaciones";
   }
 }
+
+window.api.onInstallProgress((_event, progress) => {
+  const state = updateStates.get(progress?.id);
+  if (!state) return;
+
+  state.status = "downloading";
+  state.percent = Math.min(
+    100,
+    Math.max(0, (Number(progress.percent) || 0) * 100),
+  );
+  state.message = progress.message || "Actualizando...";
+  updateCardState(progress.id);
+});
+
+window.api.onInstallComplete((_event, info, legacyId) => {
+  const success = typeof info === "boolean" ? info : info?.success !== false;
+  const id = typeof info === "boolean" ? legacyId : info?.id;
+  const state = updateStates.get(id);
+  if (!state) return;
+
+  if (!success) {
+    state.status = "error";
+    state.message =
+      (typeof info === "object" && info.message) || "Error durante la actualización.";
+    updateCardState(id);
+    return;
+  }
+
+  state.status = "complete";
+  state.percent = 100;
+  state.message =
+    (typeof info === "object" && info.message) || "Actualización completada.";
+  updateCardState(id);
+  setTimeout(() => loadUpdates(), 2000);
+});
+
+window.api.onInstallError((_event, error) => {
+  const state = updateStates.get(error?.id);
+  if (!state) return;
+
+  state.status = "error";
+  state.message = error.message || "Error durante la actualización.";
+  updateCardState(error.id);
+});
 
 checkUpdatesButton.addEventListener("click", () => loadUpdates(true));
 loadUpdates();
