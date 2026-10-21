@@ -36,9 +36,14 @@ function renderEmptyState(message) {
 
 function renderUpdates(apps) {
   updateList.innerHTML = "";
-  updateAllButton.hidden = apps.length === 0;
+  const availableApps = apps.filter(
+    (app) =>
+      app.updateAvailable &&
+      !["queued", "downloading"].includes(getUpdateState(app.id).status),
+  );
+  updateAllButton.hidden = availableApps.length === 0;
   updateAllButton.onclick = () => {
-    queueUpdates(apps);
+    queueUpdates(availableApps);
   };
 
   if (apps.length === 0) {
@@ -47,11 +52,25 @@ function renderUpdates(apps) {
     return;
   }
 
-  const updateCount =
-    apps.length === 1
-      ? "1 actualización disponible."
-      : `${apps.length} actualizaciones disponibles.`;
-  setStatus(updateCount);
+  const pendingCount = apps.filter((app) => app.updateAvailable).length;
+  const busyCount = apps.filter((app) =>
+    ["queued", "downloading"].includes(getUpdateState(app.id).status),
+  ).length;
+  if (pendingCount) {
+    setStatus(
+      pendingCount === 1
+        ? "1 actualización disponible."
+        : `${pendingCount} actualizaciones disponibles.`,
+    );
+  } else if (busyCount) {
+    setStatus(
+      busyCount === 1
+        ? "1 instalación o actualización en curso."
+        : `${busyCount} instalaciones o actualizaciones en curso.`,
+    );
+  } else {
+    setStatus("");
+  }
 
   apps.forEach((app) => {
     const card = document.createElement("article");
@@ -75,7 +94,13 @@ function renderUpdates(apps) {
 
     const description = document.createElement("p");
     description.className = "update-card-description";
-    description.textContent = app.description || "Actualización disponible";
+    const state = getUpdateState(app.id);
+    description.textContent =
+      state.status === "downloading"
+        ? state.operation === "install"
+          ? "Instalación en curso"
+          : "Actualización en curso"
+        : app.description || "Actualización disponible";
     details.append(title, description);
 
     if (app.installedVersion) {
@@ -110,7 +135,6 @@ function renderUpdates(apps) {
 
     card.append(icon, details, badge, updateButton);
     updateList.appendChild(card);
-    const state = getUpdateState(app.id);
     state.card = card;
     state.badge = badge;
     state.button = updateButton;
@@ -127,6 +151,7 @@ function getUpdateState(id) {
       status: "idle",
       percent: 0,
       message: "",
+      operation: "update",
     });
   }
   return updateStates.get(id);
@@ -140,9 +165,13 @@ function updateCardState(id) {
   state.button.disabled = isBusy;
   state.button.textContent =
     state.status === "queued"
-      ? "En cola"
+      ? state.operation === "install"
+        ? "Instalación en cola"
+        : "Actualización en cola"
       : state.status === "downloading"
-        ? "Actualizando..."
+        ? state.operation === "install"
+          ? "Instalando..."
+          : "Actualizando..."
         : state.status === "complete"
           ? "Actualizado"
           : state.status === "error"
@@ -153,7 +182,9 @@ function updateCardState(id) {
     state.status === "queued"
       ? "En cola"
       : state.status === "downloading"
-        ? "Actualizando"
+        ? state.operation === "install"
+          ? "Instalando"
+          : "Actualizando"
         : state.status === "complete"
           ? "Completado"
           : state.status === "error"
@@ -181,10 +212,15 @@ async function queueUpdate(app) {
   state.status = "queued";
   state.percent = 0;
   state.message = "Añadiendo a la cola...";
+  state.operation = app.installed ? "update" : "install";
   updateCardState(app.id);
 
   try {
-    const result = await window.api.enqueueInstall({ id: app.id });
+    const result = await window.api.enqueueInstall({
+      id: app.id,
+      installed: app.installed,
+      operation: state.operation,
+    });
     if (!result?.queued) {
       state.status = "idle";
       state.message = "";
@@ -232,11 +268,29 @@ async function loadUpdates(forceSync = false) {
       window.api.getFilesApps(),
       window.api.getInstallStatus(),
     ]);
-    const busyIds = new Set(
-      [installStatus?.active, ...(installStatus?.queued || [])].filter(Boolean),
-    );
     const fileAppsById = new Map(
       (fileApps || []).map((fileApp) => [fileApp.id, fileApp]),
+    );
+    const appsById = new Map();
+    (fileApps || []).forEach((fileApp) => {
+      appsById.set(fileApp.id, { ...fileApp, fileApp });
+    });
+    (apps || []).forEach((app) => {
+      appsById.set(app.id, {
+        ...appsById.get(app.id),
+        ...app,
+        fileApp: fileAppsById.get(app.id),
+      });
+    });
+
+    const queuedOperations = new Map(
+      (installStatus?.queuedOperations || []).map((job) => [
+        job.id,
+        job.operation,
+      ]),
+    );
+    const busyIds = new Set(
+      [installStatus?.active, ...(installStatus?.queued || [])].filter(Boolean),
     );
     const installedApps = (apps || [])
       .map((app) => ({ ...app, fileApp: fileAppsById.get(app.id) }))
@@ -263,26 +317,56 @@ async function loadUpdates(forceSync = false) {
       }),
     );
     const hasCheckFailures = results.some((app) => app.checkFailed);
-    const updatableApps = results.filter((app) => app.updateAvailable);
-    updatableApps.forEach((app) => {
-      const state = getUpdateState(app.id);
-      if (busyIds.has(app.id) && state.status !== "downloading") {
-        state.status =
-          installStatus.active === app.id ? "downloading" : "queued";
+    const updatesById = new Map(
+      results
+        .filter((app) => app.updateAvailable)
+        .map((app) => [app.id, app]),
+    );
+
+    busyIds.forEach((id) => {
+      const state = getUpdateState(id);
+      state.status = installStatus.active === id ? "downloading" : "queued";
+      state.operation =
+        id === installStatus.active
+          ? installStatus.activeOperation || "update"
+          : queuedOperations.get(id) || "update";
+
+      if (id === installStatus.active && installStatus.activeProgress) {
+        state.percent = Math.min(
+          100,
+          Math.max(0, (Number(installStatus.activeProgress.percent) || 0) * 100),
+        );
         state.message =
-          state.status === "queued"
-            ? "Esperando en la cola..."
-            : "Actualizando...";
-      } else if (!busyIds.has(app.id) && state.status === "queued") {
-        state.status = "idle";
-        state.message = "";
-      } else if (!busyIds.has(app.id) && state.status === "complete") {
+          installStatus.activeProgress.message ||
+          (state.operation === "install" ? "Instalando..." : "Actualizando...");
+      } else if (state.status === "queued") {
+        state.percent = 0;
+        state.message = "Esperando en la cola...";
+      } else {
+        state.percent = 0;
+        state.message =
+          state.operation === "install" ? "Instalando..." : "Actualizando...";
+      }
+    });
+
+    updateStates.forEach((state, id) => {
+      if (!busyIds.has(id) && ["queued", "downloading"].includes(state.status)) {
         state.status = "idle";
         state.percent = 0;
         state.message = "";
       }
     });
-    renderUpdates(updatableApps);
+
+    const visibleApps = new Map(updatesById);
+    busyIds.forEach((id) => {
+      if (!visibleApps.has(id)) {
+        visibleApps.set(
+          id,
+          appsById.get(id) || { id, name: id, updateAvailable: false },
+        );
+      }
+    });
+    renderUpdates([...visibleApps.values()]);
 
     if (hasCheckFailures) {
       setStatus(

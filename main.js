@@ -30,6 +30,8 @@ let FILES_APPS_JSON_CACHE;
 const installQueue = [];
 let isProcessingInstallQueue = false;
 let activeInstallId = null;
+let activeInstallOperation = null;
+let activeInstallProgress = null;
 
 const ICON_SIZES = [
   // "256x256",
@@ -780,6 +782,9 @@ function resolveUrlPath(downloadUrl, fileName) {
 }
 
 function sendInstallProgress(progress) {
+  if (progress?.id === activeInstallId) {
+    activeInstallProgress = progress;
+  }
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("install-progress", progress);
   }
@@ -800,6 +805,8 @@ async function processInstallQueue() {
     const appItem = job.appData || getCachedApp(job.id);
     const id = job.id || appItem?.id;
     activeInstallId = id;
+    activeInstallOperation = job.operation || "install";
+    activeInstallProgress = null;
 
     try {
       if (
@@ -833,6 +840,8 @@ async function processInstallQueue() {
   }
 
   activeInstallId = null;
+  activeInstallOperation = null;
+  activeInstallProgress = null;
   isProcessingInstallQueue = false;
 }
 
@@ -1896,6 +1905,12 @@ ipcMain.handle("enqueue-install", async (_, appData) => {
   if (!appData?.id) throw new Error("Programa no válido");
 
   const appItem = getCachedApp(appData.id) || appData;
+  const isInstalled =
+    typeof appData.installed === "boolean"
+      ? appData.installed
+      : (appItem.paths || []).some((appPath) => findExecutable(appPath) !== null);
+  const operation =
+    appData.operation || (isInstalled ? "update" : "install");
   const alreadyActive = activeInstallId === appData.id;
   const existingIndex = installQueue.findIndex(
     (job) => (job.id || job.appData?.id) === appData.id,
@@ -1917,6 +1932,7 @@ ipcMain.handle("enqueue-install", async (_, appData) => {
   enqueueInstall({
     id: appData.id,
     appData: appItem,
+    operation,
     virusAlertConfirmed: needsVirusConfirmation,
   });
   const queuePosition = installQueue.length + (isProcessingInstallQueue ? 2 : 1);
@@ -1933,7 +1949,13 @@ ipcMain.handle("enqueue-install", async (_, appData) => {
 
 ipcMain.handle("get-install-status", () => ({
   active: activeInstallId,
+  activeOperation: activeInstallOperation,
+  activeProgress: activeInstallProgress,
   queued: installQueue.map((job) => job.id || job.appData?.id).filter(Boolean),
+  queuedOperations: installQueue.map((job) => ({
+    id: job.id || job.appData?.id,
+    operation: job.operation || "install",
+  })).filter((job) => job.id),
 }));
 
 ipcMain.handle("install-program-by-id", async (_, id) => {
