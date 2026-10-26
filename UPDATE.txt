@@ -2,6 +2,7 @@ Archivos cambiados:
 - main.js
 - package.json
 - UPDATE.md
+- settings.json
 
 Archivos agregados:
 - UPDATE.txt

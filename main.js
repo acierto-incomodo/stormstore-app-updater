@@ -58,6 +58,7 @@ const DEFAULT_SETTINGS = Object.freeze({
   has_completed_first_launch: false,
   show_tray: false,
   debug_mode: false,
+  last_seen_news_version: "",
 });
 
 // Flags de compilación: cambiar aquí antes de generar el ejecutable.
@@ -107,6 +108,8 @@ const REMOTE_ICONS_BASE =
 let mainWindow;
 let updateInfo = null;
 let tray = null;
+let releaseNotesCheckInProgress = false;
+let releaseNotesShownThisSession = false;
 
 function updateRemoteSyncProgress() {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -189,6 +192,97 @@ function saveSettings(newSettings) {
   } catch (err) {
     console.error("Error guardando ajustes:", err);
     return null;
+  }
+}
+
+function fetchReleaseNotes(version) {
+  return new Promise((resolve, reject) => {
+    const request = https.get(
+      `https://api.github.com/repos/acierto-incomodo/StormStore/releases/tags/v${encodeURIComponent(version)}`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "StormStore-App",
+        },
+      },
+      (response) => {
+        let body = "";
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+          body += chunk;
+          if (body.length > 1024 * 1024) {
+            request.destroy(new Error("Las notas de versión son demasiado grandes."));
+          }
+        });
+        response.on("end", () => {
+          if (response.statusCode !== 200) {
+            reject(
+              new Error(
+                `GitHub respondió con estado ${response.statusCode} al buscar las novedades de v${version}.`,
+              ),
+            );
+            return;
+          }
+
+          try {
+            const release = JSON.parse(body);
+            if (release.tag_name !== `v${version}`) {
+              reject(new Error(`GitHub no devolvió el release esperado v${version}.`));
+              return;
+            }
+            resolve(release);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      },
+    );
+
+    request.setTimeout(10000, () => {
+      request.destroy(new Error("Tiempo de espera agotado al cargar las novedades."));
+    });
+    request.on("error", reject);
+  });
+}
+
+async function showReleaseNotesIfNeeded() {
+  if (
+    releaseNotesCheckInProgress ||
+    releaseNotesShownThisSession ||
+    !mainWindow ||
+    mainWindow.isDestroyed() ||
+    !mainWindow.isVisible()
+  ) {
+    return;
+  }
+
+  const version = app.getVersion();
+  if (loadSettings().last_seen_news_version === version) return;
+
+  releaseNotesCheckInProgress = true;
+  try {
+    const release = await fetchReleaseNotes(version);
+    if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.isVisible()) return;
+
+    await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      title: `Novedades de StormStore v${version}`,
+      message: release.name || `StormStore v${version}`,
+      detail: release.body?.trim() || "No hay detalles para esta versión.",
+      buttons: ["Entendido"],
+      defaultId: 0,
+      noLink: true,
+    });
+
+    const savedSettings = saveSettings({ last_seen_news_version: version });
+    if (!savedSettings) {
+      throw new Error("No se pudo guardar la versión de las novedades mostradas.");
+    }
+    releaseNotesShownThisSession = true;
+  } catch (err) {
+    console.warn("No se pudieron mostrar las novedades de StormStore:", err.message);
+  } finally {
+    releaseNotesCheckInProgress = false;
   }
 }
 
@@ -507,6 +601,7 @@ function createWindow() {
       win.show();
     }
   });
+  win.on("show", showReleaseNotesIfNeeded);
 
   if (updatePending) {
     win.webContents.once("did-finish-load", () => {

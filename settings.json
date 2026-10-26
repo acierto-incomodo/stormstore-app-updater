@@ -5,5 +5,6 @@
   "start_maximized": true,
   "show_tray": false,
   "has_completed_first_launch": false,
-  "debug_mode": false
+  "debug_mode": false,
+  "last_seen_news_version": ""
 }
