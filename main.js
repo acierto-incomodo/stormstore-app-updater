@@ -5,7 +5,6 @@ const {
   shell,
   session,
   nativeTheme,
-  dialog,
   protocol,
   net,
   Tray,
@@ -106,10 +105,12 @@ const REMOTE_ICONS_BASE =
 
 // Variables globales
 let mainWindow;
+let releaseNotesWindow = null;
 let updateInfo = null;
 let tray = null;
 let releaseNotesCheckInProgress = false;
 let releaseNotesShownThisSession = false;
+let currentReleaseNotes = null;
 
 function updateRemoteSyncProgress() {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -264,15 +265,7 @@ async function showReleaseNotesIfNeeded() {
     const release = await fetchReleaseNotes(version);
     if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.isVisible()) return;
 
-    await dialog.showMessageBox(mainWindow, {
-      type: "info",
-      title: `Novedades de StormStore v${version}`,
-      message: release.name || `StormStore v${version}`,
-      detail: release.body?.trim() || "No hay detalles para esta versión.",
-      buttons: ["Entendido"],
-      defaultId: 0,
-      noLink: true,
-    });
+    await showReleaseNotesWindow(release);
 
     const savedSettings = saveSettings({ last_seen_news_version: version });
     if (!savedSettings) {
@@ -284,6 +277,76 @@ async function showReleaseNotesIfNeeded() {
   } finally {
     releaseNotesCheckInProgress = false;
   }
+}
+
+function showReleaseNotesWindow(release) {
+  if (releaseNotesWindow && !releaseNotesWindow.isDestroyed()) {
+    releaseNotesWindow.focus();
+    return Promise.resolve();
+  }
+
+  currentReleaseNotes = {
+    name: release.name || `StormStore ${release.tag_name}`,
+    tagName: release.tag_name,
+    body: release.body?.trim() || "No hay detalles para esta versión.",
+  };
+
+  return new Promise((resolve, reject) => {
+    const newsWindow = new BrowserWindow({
+      width: 720,
+      height: 620,
+      minWidth: 420,
+      minHeight: 320,
+      parent: mainWindow,
+      modal: true,
+      show: false,
+      frame: false,
+      resizable: true,
+      minimizable: false,
+      maximizable: false,
+      backgroundColor: "#121212",
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: path.join(__dirname, "preload.js"),
+        contextIsolation: true,
+      },
+    });
+
+    releaseNotesWindow = newsWindow;
+    let loadFailed = false;
+    newsWindow.once("ready-to-show", () => {
+      if (!newsWindow.isDestroyed()) newsWindow.show();
+    });
+    newsWindow.webContents.once(
+      "did-fail-load",
+      (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+        if (!isMainFrame) return;
+        loadFailed = true;
+        reject(
+          new Error(
+            `No se pudo abrir la ventana de novedades: ${errorDescription} (${errorCode}).`,
+          ),
+        );
+        if (!newsWindow.isDestroyed()) newsWindow.destroy();
+      },
+    );
+    newsWindow.once("closed", () => {
+      if (releaseNotesWindow === newsWindow) {
+        releaseNotesWindow = null;
+        currentReleaseNotes = null;
+      }
+      if (!loadFailed) resolve();
+    });
+    newsWindow
+      .loadFile(
+        path.join(__dirname, "renderer/novedades/window/novedades-window.html"),
+      )
+      .catch((err) => {
+        loadFailed = true;
+        reject(err);
+        if (!newsWindow.isDestroyed()) newsWindow.destroy();
+      });
+  });
 }
 
 function createTray() {
@@ -2201,6 +2264,23 @@ ipcMain.handle("open-main-view", () => {
 // -----------------------------
 ipcMain.handle("get-app-version", () => {
   return app.getVersion();
+});
+
+ipcMain.handle("get-release-notes-window-data", (event) => {
+  if (event.sender !== releaseNotesWindow?.webContents) {
+    throw new Error("La ventana solicitante no es la ventana de novedades.");
+  }
+  return currentReleaseNotes;
+});
+
+ipcMain.on("close-release-notes-window", (event) => {
+  if (
+    releaseNotesWindow &&
+    !releaseNotesWindow.isDestroyed() &&
+    event.sender === releaseNotesWindow.webContents
+  ) {
+    releaseNotesWindow.close();
+  }
 });
 
 // =====================================

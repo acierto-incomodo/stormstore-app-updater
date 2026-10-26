@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Novedades - StormStore</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        color: #f4f0f7;
+        background: #121212;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #39343d;
+      }
+
+      header {
+        flex: 0 0 auto;
+        padding: 22px 28px 16px;
+        border-bottom: 1px solid #39343d;
+        -webkit-app-region: drag;
+      }
+
+      header p {
+        margin: 0 0 6px;
+        color: #cbb6e6;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(21px, 4vw, 29px);
+        overflow-wrap: anywhere;
+      }
+
+      main {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding: 20px 28px 28px;
+        scrollbar-color: #71627f #1d1b20;
+        scrollbar-width: thin;
+      }
+
+      #release-status {
+        margin: 0;
+        color: #c7c2ca;
+        line-height: 1.6;
+      }
+
+      #release-body {
+        overflow-wrap: anywhere;
+        line-height: 1.65;
+      }
+
+      #release-body h1,
+      #release-body h2,
+      #release-body h3,
+      #release-body h4,
+      #release-body h5,
+      #release-body h6 {
+        margin: 1.25em 0 0.5em;
+      }
+
+      #release-body p,
+      #release-body ul {
+        margin: 0 0 0.85em;
+      }
+
+      #release-body ul {
+        padding-left: 1.5em;
+      }
+
+      #release-body a {
+        color: #d0a8ff;
+      }
+
+      #release-body code {
+        padding: 2px 6px;
+        border-radius: 5px;
+        background: #29252e;
+        font-family: Consolas, monospace;
+      }
+
+      footer {
+        display: flex;
+        flex: 0 0 auto;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 20px;
+        border-top: 1px solid #39343d;
+        background: #171619;
+      }
+
+      button {
+        min-height: 38px;
+        padding: 0 18px;
+        border: 1px solid #71627f;
+        border-radius: 8px;
+        color: #f4f0f7;
+        background: #29252e;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #393141;
+      }
+
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid #d0a8ff;
+        outline-offset: 2px;
+      }
+
+      #close-button {
+        border-color: #cbb6e6;
+        color: #1c1623;
+        background: #cbb6e6;
+        font-weight: 600;
+      }
+
+      #close-button:hover {
+        background: #d9c8ed;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 520px) {
+        header {
+          padding: 18px 18px 14px;
+        }
+
+        main {
+          padding: 18px;
+        }
+
+        footer {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p id="release-version">StormStore</p>
+      <h1 id="release-title">Novedades</h1>
+    </header>
+
+    <main id="release-content" tabindex="0">
+      <p id="release-status">Cargando novedades…</p>
+      <article id="release-body"></article>
+    </main>
+
+    <footer>
+      <button id="scroll-end-button" type="button" hidden>Ir al final</button>
+      <button id="close-button" type="button">Cerrar</button>
+    </footer>
+
+    <script src="novedades-window.js"></script>
+  </body>
+</html>

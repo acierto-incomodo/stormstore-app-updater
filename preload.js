@@ -14,6 +14,10 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.invoke("open-app", path, requiresSteam),
   openAppLocation: (path) => ipcRenderer.invoke("open-app-location", path),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
+  getReleaseNotesWindowData: () =>
+    ipcRenderer.invoke("get-release-notes-window-data"),
+  closeReleaseNotesWindow: () =>
+    ipcRenderer.send("close-release-notes-window"),
   getInstalledFileAppVersion: (id) =>
     ipcRenderer.invoke("get-installed-fileapp-version", id),
   uninstallApp: (path) => ipcRenderer.invoke("uninstall-app", path),
