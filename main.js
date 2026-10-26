@@ -32,6 +32,7 @@ let isProcessingInstallQueue = false;
 let activeInstallId = null;
 let activeInstallOperation = null;
 let activeInstallProgress = null;
+let remoteDataSyncCount = 0;
 
 const ICON_SIZES = [
   // "256x256",
@@ -106,6 +107,16 @@ const REMOTE_ICONS_BASE =
 let mainWindow;
 let updateInfo = null;
 let tray = null;
+
+function updateRemoteSyncProgress() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (remoteDataSyncCount > 0) {
+      mainWindow.setProgressBar(0, { mode: "indeterminate" });
+    } else {
+      mainWindow.setProgressBar(-1);
+    }
+  }
+}
 
 // =====================================
 // GESTIÓN DE AJUSTES
@@ -428,6 +439,7 @@ function createWindow() {
   });
 
   mainWindow = win;
+  updateRemoteSyncProgress();
 
   win.webContents.on("will-navigate", (event, navigationUrl) => {
     if (shouldShowErrorPage(navigationUrl)) {
@@ -1423,17 +1435,19 @@ async function syncFilesAppsData() {
 }
 
 async function syncRemoteData() {
-  if (!fs.existsSync(ICONS_CACHE_DIR)) {
-    fs.mkdirSync(ICONS_CACHE_DIR, { recursive: true });
-  }
-
-  // Asegurar que existan las subcarpetas para cada tamaño
-  ICON_SIZES.forEach((size) => {
-    const dir = path.join(ICONS_CACHE_DIR, size);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  });
-
+  remoteDataSyncCount += 1;
+  updateRemoteSyncProgress();
   try {
+    if (!fs.existsSync(ICONS_CACHE_DIR)) {
+      fs.mkdirSync(ICONS_CACHE_DIR, { recursive: true });
+    }
+
+    // Asegurar que existan las subcarpetas para cada tamaño
+    ICON_SIZES.forEach((size) => {
+      const dir = path.join(ICONS_CACHE_DIR, size);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    });
+
     const data = await new Promise((resolve, reject) => {
       const req = https.get(REMOTE_APPS_URL, (res) => {
         if (res.statusCode !== 200)
@@ -1500,6 +1514,9 @@ async function syncRemoteData() {
     if (fs.existsSync(APPS_JSON_CACHE)) {
       appsData = JSON.parse(fs.readFileSync(APPS_JSON_CACHE, "utf8"));
     }
+  } finally {
+    remoteDataSyncCount -= 1;
+    updateRemoteSyncProgress();
   }
 }
 

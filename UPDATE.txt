@@ -1,0 +1,7 @@
+Archivos cambiados:
+- main.js
+- package.json
+- UPDATE.md
+
+Archivos agregados:
+- UPDATE.txt
