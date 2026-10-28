@@ -3,6 +3,10 @@ Archivos cambiados:
 - package.json
 - UPDATE.md
 - settings.json
+- renderer\novedades\window\novedades-window.html
+- cosas-que-hacer\arreglar-errores.txt
+- cosas-que-hacer\hacer.txt
+- cosas-que-hacer\primer-inicio.txt
 
 Archivos agregados:
 - UPDATE.txt
