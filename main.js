@@ -246,7 +246,7 @@ function fetchReleaseNotes(version) {
   });
 }
 
-async function showReleaseNotesIfNeeded() {
+async function showReleaseNotesIfNeeded(force = false) {
   if (
     releaseNotesCheckInProgress ||
     releaseNotesShownThisSession ||
@@ -258,7 +258,7 @@ async function showReleaseNotesIfNeeded() {
   }
 
   const version = app.getVersion();
-  if (loadSettings().last_seen_news_version === version) return;
+  if (!force && loadSettings().last_seen_news_version === version) return;
 
   releaseNotesCheckInProgress = true;
   try {
@@ -622,10 +622,14 @@ function createWindow() {
   const startInBigPicture = process.argv.some((arg) =>
     vortexFlags.includes(arg),
   );
+  const openNewsOnStart =
+    !startInBigPicture &&
+    process.argv.some((arg) => arg.toLowerCase() === "--novedades");
   const updatePending = !!updateInfo;
   const isSilentStart =
     (settings.start_minimized || process.argv.includes("--start-minimized")) &&
     !startInBigPicture &&
+    !openNewsOnStart &&
     !updatePending;
 
   const firstLaunch = settings.has_completed_first_launch === false;
@@ -664,7 +668,7 @@ function createWindow() {
       win.show();
     }
   });
-  win.on("show", showReleaseNotesIfNeeded);
+  win.on("show", () => showReleaseNotesIfNeeded(openNewsOnStart));
 
   if (updatePending) {
     win.webContents.once("did-finish-load", () => {
