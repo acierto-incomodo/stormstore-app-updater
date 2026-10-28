@@ -249,7 +249,7 @@ function fetchReleaseNotes(version) {
 async function showReleaseNotesIfNeeded(force = false) {
   if (
     releaseNotesCheckInProgress ||
-    releaseNotesShownThisSession ||
+    (releaseNotesShownThisSession && !force) ||
     !mainWindow ||
     mainWindow.isDestroyed() ||
     !mainWindow.isVisible()
@@ -277,6 +277,10 @@ async function showReleaseNotesIfNeeded(force = false) {
   } finally {
     releaseNotesCheckInProgress = false;
   }
+}
+
+function hasNovedadesFlag(args) {
+  return args.some((arg) => arg.toLowerCase() === "--novedades");
 }
 
 function showReleaseNotesWindow(release) {
@@ -623,8 +627,7 @@ function createWindow() {
     vortexFlags.includes(arg),
   );
   const openNewsOnStart =
-    !startInBigPicture &&
-    process.argv.some((arg) => arg.toLowerCase() === "--novedades");
+    !startInBigPicture && hasNovedadesFlag(process.argv);
   const updatePending = !!updateInfo;
   const isSilentStart =
     (settings.start_minimized || process.argv.includes("--start-minimized")) &&
@@ -2435,6 +2438,7 @@ if (!gotLock) {
       if (!mainWindow.isVisible()) mainWindow.show();
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
+      if (hasNovedadesFlag(argv)) showReleaseNotesIfNeeded(true);
     }
     const url = argv.find((arg) => arg.startsWith("stormstore://"));
     if (url) handleProtocolUrl(url);
