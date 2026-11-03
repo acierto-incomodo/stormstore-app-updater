@@ -1,1 +1,3 @@
 agregar a la lista: https://github.com/MinLOL12/Amethyst/releases/tag/v1.0.34
+
+agrega en el main.js una opcion que desactive la ventana de novedades. por ejemplo (creo que se puede hacer para la opcion asi): let mostrarVentanaNovedades = false; (y con true para que si se muestre)
