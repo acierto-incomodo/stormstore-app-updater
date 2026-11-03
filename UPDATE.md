@@ -14,14 +14,17 @@
 
 ### Actualizaciones:
 Patch   Backwards-compatible bug fixes
- electron-updater   ^6.8.9  →  ^6.8.11
- execa              ^10.2.0  →  ^10.2.1
+ electron-updater   ^6.8.9    →  ^6.8.11
+ execa              ^10.2.0   →  ^10.2.1
  systeminformation  ^5.33.16  →  ^5.33.19
 
 Minor   Backwards-compatible features
  electron-builder   ^26.15.3  →  ^26.18.0
- axios              ^1.20.0  →  ^1.21.0
- electron           ^45.0.0  →  ^45.2.1
+ axios              ^1.20.0   →  ^1.21.0
+ electron           ^45.0.0   →  ^45.2.1
+
+Actualizado 7-zip
+ 7-zip              ^2604     →  ^2605
 
   
 
