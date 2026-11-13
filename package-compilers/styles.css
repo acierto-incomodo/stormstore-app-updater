@@ -21,6 +21,35 @@ body {
         #0c111a;
 }
 
+.home-page { min-width: 0; }
+.home-shell { width: min(760px, calc(100% - 48px)); margin: 0 auto; padding: 72px 0; }
+.home-header { display: flex; align-items: center; gap: 16px; }
+.home-header h1 { margin: 0; font-size: 23px; }
+.home-intro { margin: 88px 0 25px; }
+.home-intro .eyebrow { margin-bottom: 10px; }
+.home-intro h2 { margin-bottom: 7px; font-size: 28px; }
+.home-intro > p:last-child { margin: 0; color: var(--muted); font-size: 14px; }
+.tool-card {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+    padding: 21px;
+    border: 1px solid var(--stroke);
+    border-radius: 13px;
+    background: linear-gradient(145deg, rgba(20, 29, 42, .97), rgba(17, 25, 37, .98));
+    color: inherit;
+    text-decoration: none;
+    transition: border-color .15s, transform .15s, background .15s;
+}
+.tool-card:hover { transform: translateY(-2px); border-color: #5279ad; background: #162235; }
+.tool-icon { display: grid; width: 46px; height: 46px; flex: 0 0 46px; place-items: center; border: 1px solid #304b6d; border-radius: 11px; background: #17283e; color: #a9ccff; font-size: 23px; }
+.tool-copy { display: grid; flex: 1; gap: 5px; }
+.tool-copy strong { font: 700 15px 'Manrope', sans-serif; }
+.tool-copy span { color: var(--muted); font-size: 12px; }
+.tool-arrow { color: #8db9f8; font-size: 21px; }
+.back-link { display: inline-block; margin-bottom: 22px; color: #8db9f8; font-size: 12px; text-decoration: none; }
+.back-link:hover { color: #c3dcff; }
+
 .app-shell {
     width: min(940px, calc(100% - 64px));
     margin: 0 auto;

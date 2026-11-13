@@ -6,120 +6,30 @@
     <title>Package Compilers</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <main class="app-shell">
-        <header class="page-header">
+<body class="home-page">
+    <main class="home-shell">
+        <header class="home-header">
             <div class="brand-mark">P</div>
             <div>
                 <p class="eyebrow">STORMGAMESSTUDIOS</p>
-                <h1>Crear paquete de aplicación</h1>
-                <p class="subtitle">Completa los datos y genera un ZIP listo para añadir al catálogo.</p>
+                <h1>Package Compilers</h1>
             </div>
         </header>
 
-        <form id="app-form" novalidate>
-            <section class="panel">
-                <div class="section-heading">
-                    <span class="section-number">01</span>
-                    <div>
-                        <h2>Información de la aplicación</h2>
-                        <p>Los campos marcados con <span class="required-mark">*</span> son obligatorios.</p>
-                    </div>
-                </div>
+        <section class="home-intro">
+            <p class="eyebrow">CENTRO DE HERRAMIENTAS</p>
+            <h2>¿Qué quieres hacer?</h2>
+            <p>Selecciona una herramienta para empezar.</p>
+        </section>
 
-                <div class="field-grid">
-                    <label class="field">
-                        <span>ID <span class="required-mark">*</span></span>
-                        <input id="app-id" type="text" placeholder="mi-aplicacion" required autocomplete="off">
-                        <small>Usa minúsculas, números y guiones.</small>
-                    </label>
-                    <label class="field">
-                        <span>Nombre <span class="required-mark">*</span></span>
-                        <input id="app-name" type="text" placeholder="Nombre de la aplicación" required>
-                    </label>
-                    <label class="field full-width">
-                        <span>Descripción <span class="required-mark">*</span></span>
-                        <textarea id="app-description" rows="4" placeholder="Describe la aplicación..." required></textarea>
-                    </label>
-                    <fieldset class="field full-width category-field">
-                        <legend>Categorías <span class="required-mark">*</span> <small>Selecciona una o varias</small></legend>
-                        <div id="categories" class="category-list"></div>
-                    </fieldset>
-                    <label class="field full-width">
-                        <span>Icono</span>
-                        <input id="app-icon" type="text" readonly value="../assets/apps/.png">
-                        <small>Se genera automáticamente según el ID.</small>
-                    </label>
-                </div>
-            </section>
-
-            <section class="panel">
-                <div class="section-heading">
-                    <span class="section-number">02</span>
-                    <div>
-                        <h2>Imágenes</h2>
-                        <p>La imagen de 512 × 512 es obligatoria. Las demás son opcionales.</p>
-                    </div>
-                </div>
-                <div id="images" class="image-grid"></div>
-            </section>
-
-            <section class="panel">
-                <div class="section-heading">
-                    <span class="section-number">03</span>
-                    <div>
-                        <h2>Instalación y compatibilidad</h2>
-                        <p>Añade al menos una ruta al ejecutable principal.</p>
-                    </div>
-                </div>
-
-                <div class="field-grid">
-                    <div class="field full-width">
-                        <div class="field-title">Rutas de ejecutables <span class="required-mark">*</span></div>
-                        <div id="paths" class="path-list"></div>
-                        <button id="add-path" class="text-button" type="button">＋ Añadir otra ruta</button>
-                    </div>
-                    <label class="field full-width">
-                        <span>Descarga <span class="required-mark">*</span></span>
-                        <input id="app-download" type="text" placeholder="https://..." required>
-                    </label>
-                    <label class="field full-width">
-                        <span>Desinstalador</span>
-                        <input id="app-uninstall" type="text" placeholder="Por defecto: carpeta del primer ejecutable\unins000.exe">
-                        <small>Si se deja vacío, se usará la carpeta del primer ejecutable con el nombre unins000.exe.</small>
-                    </label>
-                    <label class="field">
-                        <span>Steam</span>
-                        <select id="app-steam"><option value="no">No</option><option value="si">Sí</option></select>
-                    </label>
-                    <label class="field">
-                        <span>Wi-Fi</span>
-                        <select id="app-wifi"><option value="no">No</option><option value="si">Sí</option></select>
-                    </label>
-                    <label class="field">
-                        <span>Alerta de virus</span>
-                        <select id="app-virus"><option value="none">Ninguna</option><option value="alert">Alerta</option></select>
-                    </label>
-                    <label class="field">
-                        <span>Share compatibility</span>
-                        <input type="text" value="no" readonly>
-                    </label>
-                    <label class="field">
-                        <span>Verified</span>
-                        <input type="text" value="false" readonly>
-                    </label>
-                </div>
-            </section>
-
-            <footer class="form-footer">
-                <p id="status" role="status" aria-live="polite"></p>
-                <button id="create-package" class="primary-button" type="submit">
-                    <span>Generar paquete ZIP</span>
-                    <span aria-hidden="true">→</span>
-                </button>
-            </footer>
-        </form>
+        <a class="tool-card" href="compiler.html">
+            <span class="tool-icon" aria-hidden="true">⌘</span>
+            <span class="tool-copy">
+                <strong>Compiler</strong>
+                <span>Crea un paquete de aplicación con sus imágenes y datos.</span>
+            </span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+        </a>
     </main>
-    <script src="renderer.js"></script>
 </body>
 </html>
