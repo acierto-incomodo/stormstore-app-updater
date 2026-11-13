@@ -7,6 +7,8 @@ Archivos cambiados:
 - cosas-que-hacer\arreglar-errores.txt
 - cosas-que-hacer\hacer.txt
 - cosas-que-hacer\primer-inicio.txt
+- renderer\epic.js
+- renderer\steam.js
 
 Archivos agregados:
 - UPDATE.txt
