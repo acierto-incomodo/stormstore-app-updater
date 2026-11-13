@@ -52,7 +52,7 @@ function renderApps() {
 
   if (filtered.length === 0) {
     appsContainer.innerHTML =
-      "<p>No se encontraron juegos de Steam instalados.</p>";
+      "<p>No se encontraron juegos de Steam instalados.</p><p>Es posible que no tengas Steam instalado.</p>";
     return;
   }
 

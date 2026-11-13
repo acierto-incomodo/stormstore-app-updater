@@ -52,7 +52,7 @@ function renderApps() {
 
   if (filtered.length === 0) {
     appsContainer.innerHTML =
-      "<p>No se encontraron juegos de Epic Games instalados.</p>";
+      "<p>No se encontraron juegos de Epic Games instalados.</p><p>Es posible que no tengas Epic Games instalado.</p>";
     return;
   }
 
