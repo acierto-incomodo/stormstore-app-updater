@@ -12,3 +12,4 @@ Archivos cambiados:
 
 Archivos agregados:
 - UPDATE.txt
+- package-compilers

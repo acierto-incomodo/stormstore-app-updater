@@ -6,3 +6,4 @@ aspnetcore-runtime-8.0.23-win-x64.exe
 package-lock.json
 package-lock.json
 /setup/dist
+/package-compilers/node_modules
