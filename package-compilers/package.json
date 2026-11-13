@@ -8,6 +8,16 @@
     "build": "electron-builder",
     "update-check": "electron-updater"
   },
+  "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "acierto-incomodo",
+      "repo": "StormStore"
+    },
+    "win": {
+      "target": "zip"
+    }
+  },
   "keywords": [],
   "type": "commonjs",
   "devDependencies": {

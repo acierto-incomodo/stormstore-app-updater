@@ -7,3 +7,4 @@ package-lock.json
 package-lock.json
 /setup/dist
 /package-compilers/node_modules
+/package-compilers/dist
