@@ -84,6 +84,7 @@
     "electron-builder": "^26.18.0"
   },
   "dependencies": {
+    "@banegasn/m3-button": "^2.2.5",
     "@equal-games/game-scanner": "^1.1.4",
     "axios": "^1.21.1",
     "create-desktop-shortcuts": "^1.12.0",
