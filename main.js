@@ -63,6 +63,7 @@ const DEFAULT_SETTINGS = Object.freeze({
 // Flags de compilación: cambiar aquí antes de generar el ejecutable.
 const ENABLE_SETTINGS_PAGE = true;
 const ENABLE_FIRST_LAUNCH_PAGE = false;
+const ENABLE_RELEASE_NOTES = true;
 
 function shouldShowErrorPage(targetUrl = "") {
   try {
@@ -248,6 +249,7 @@ function fetchReleaseNotes(version) {
 
 async function showReleaseNotesIfNeeded(force = false) {
   if (
+    !ENABLE_RELEASE_NOTES ||
     releaseNotesCheckInProgress ||
     (releaseNotesShownThisSession && !force) ||
     !mainWindow ||
@@ -627,7 +629,9 @@ function createWindow() {
     vortexFlags.includes(arg),
   );
   const openNewsOnStart =
-    !startInBigPicture && hasNovedadesFlag(process.argv);
+    ENABLE_RELEASE_NOTES &&
+    !startInBigPicture &&
+    hasNovedadesFlag(process.argv);
   const updatePending = !!updateInfo;
   const isSilentStart =
     (settings.start_minimized || process.argv.includes("--start-minimized")) &&
